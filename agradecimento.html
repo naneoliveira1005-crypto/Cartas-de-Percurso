@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carta de agradecimento — Cartas de Percurso</title>
+<style>
+:root{--verde:#173d34;--dourado:#b89452;--papel:#fffaf1;--texto:#262626;--linha:#d9c79f}
+*{box-sizing:border-box}body{margin:0;background:#f4eee3;color:var(--texto);font-family:Georgia,"Times New Roman",serif}
+.wrap{max-width:920px;margin:0 auto;padding:32px 18px 60px}
+.envelope{background:linear-gradient(180deg,#efe2ca,#e7d6b7);border:2px solid var(--dourado);border-radius:24px;padding:56px 34px;text-align:center;box-shadow:0 24px 60px rgba(54,39,19,.15)}
+.eyebrow{font:700 11px Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;color:#6d604d}
+h1{font-size:52px;line-height:.95;color:var(--verde);margin:18px 0 10px}
+.sub{color:var(--dourado);font-size:21px;font-style:italic}.btn{margin-top:24px;border:0;border-radius:999px;background:var(--verde);color:#fff;padding:14px 26px;font:700 15px Arial,sans-serif;cursor:pointer}
+.paper{display:none;margin-top:26px;background:var(--papel);border:1px solid var(--linha);border-radius:18px;padding:42px;box-shadow:0 18px 45px rgba(48,36,20,.08)}
+.paper.show{display:block}.paper p{font-size:18px;line-height:1.8}.hello{font-size:25px!important;color:var(--verde);font-style:italic}
+.note{margin:28px 0;padding:18px;border-left:4px solid var(--dourado);background:#fffdf8}
+.section{margin-top:32px;padding-top:24px;border-top:1px solid var(--linha)}
+.section h2{color:var(--verde);font-size:24px}
+.small{font:13px/1.6 Arial,sans-serif;color:#6c665e}
+@media(max-width:620px){h1{font-size:40px}.paper{padding:26px 22px}.paper p{font-size:17px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="envelope" id="env">
+<div class="eyebrow">Cartas de Percurso</div>
+<h1>Uma ideia que<br>continuou caminhando</h1>
+<div class="sub">Carta de agradecimento</div>
+<button class="btn" id="abrir">Abrir a carta</button>
+</section>
+
+<section class="paper" id="carta">
+<p class="hello">Querida professora,</p>
+
+<p>Quis lhe escrever porque, de algum modo, este trabalho também guarda uma pequena marca sua.</p>
+
+<p>Foi a partir de uma ideia que você me trouxe — a possibilidade de trabalhar com uma carta em formato digital — que comecei a imaginar outros caminhos para aquilo que eu desejava construir com as coordenadoras. A ideia ficou comigo, ganhou novas perguntas e, aos poucos, começou a tomar uma forma que eu mesma ainda não conseguia visualizar naquele primeiro momento.</p>
+
+<p>Hoje, a Carta de Percurso se transformou em uma experiência digital individualizada. Cada coordenadora receberá um acesso próprio, encontrará uma carta pensada para ela e um espaço reservado para escrever aquilo que talvez não tenha encontrado lugar nos momentos coletivos.</p>
+
+<div class="note">Algumas cartas também carregam pequenas referências — uma música, um poema, um livro, uma imagem — escolhidas a partir de marcas que foram ficando do percurso formativo.</div>
+
+<p>Também construí um ambiente em que essas cartas podem ser escritas, guardadas e, quando a participante decidir, lacradas. A proposta é preservar a singularidade da escrita e, ao mesmo tempo, cuidar da confidencialidade e do lugar de cada voz dentro da pesquisa.</p>
+
+<p>Ainda há muito sendo construído. Mas, quando vi a ideia tomando essa dimensão, senti vontade de lhe contar.</p>
+
+<p>Porque algumas contribuições chegam como uma sugestão aparentemente pequena e continuam trabalhando dentro de nós muito depois da conversa. A sua foi assim.</p>
+
+<p>Obrigada por ter colocado essa possibilidade no meu caminho. Eu a acolhi, fui mexendo nela, experimentando, transformando — e hoje ela está se tornando uma parte muito bonita do meu percurso de pesquisa.</p>
+
+<p>Quis que você soubesse.</p>
+
+<p><strong>Com carinho,<br>Nanny Oliveira</strong></p>
+
+<div class="section">
+<h2>O que nasceu dessa ideia</h2>
+<p class="small">Esta página é apenas uma apresentação de leitura. Ela não dá acesso às cartas das participantes, aos dados da pesquisa ou à área da pesquisadora.</p>
+<p class="small">A experiência construída para as coordenadoras inclui carta individual, personalização a partir do percurso formativo, um “Algo me fez lembrar de você” e um espaço próprio de escrita e lacre.</p>
+</div>
+</section>
+</main>
+<script>
+document.getElementById("abrir").onclick=()=>{
+ document.getElementById("env").style.display="none";
+ document.getElementById("carta").classList.add("show");
+ document.getElementById("carta").scrollIntoView({behavior:"smooth"});
+};
+</script>
+</body>
+</html>
