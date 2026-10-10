@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O que ainda preciso dizer — Carta de Percurso</title>
+<style>
+:root{--verde:#173d34;--dourado:#b89452;--papel:#fffaf1;--texto:#262626;--muted:#70695d;--linha:#d9c79f}
+*{box-sizing:border-box}body{margin:0;color:var(--texto);font-family:Georgia,"Times New Roman",serif;background:radial-gradient(circle at 50% 0%,rgba(184,148,82,.08),transparent 34%),#f4eee3}
+.wrap{width:100%;padding:18px 16px 40px}
+.envelope{position:relative;width:calc(100vw - 32px);max-width:1240px;aspect-ratio:16/9;margin:0 auto 26px;padding:34px 54px 32px;border-radius:26px;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;background:linear-gradient(145deg,rgba(255,255,255,.46),transparent 30%),linear-gradient(180deg,#efe2ca,#e7d6b7);border:2px solid var(--dourado);box-shadow:0 28px 72px rgba(54,39,19,.18),inset 0 0 0 6px rgba(255,255,255,.30)}
+.envelope:before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:620px solid transparent;border-right:620px solid transparent;border-top:305px solid #d9c39a;opacity:.95}
+.envelope:after{content:"";position:absolute;inset:14px;border:1px solid rgba(184,148,82,.25);border-radius:20px;pointer-events:none}
+.topline{position:absolute;top:28px;left:50%;transform:translateX(-50%);z-index:6;width:100%;text-align:center;color:#675a44;font:700 10px Arial,sans-serif;text-transform:uppercase;letter-spacing:.18em}
+.mark{position:absolute;z-index:7;top:84px;left:50%;transform:translateX(-50%);width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d4b674,#b89452 52%,#8d6a32);color:#fff8e8;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:inset 0 0 0 6px rgba(255,255,255,.16),0 7px 18px rgba(0,0,0,.14)}
+.inner{position:relative;z-index:8;width:min(760px,72%);padding-top:58px}
+h1{margin:0;color:var(--verde);font-size:clamp(48px,6.3vw,86px);line-height:.90;letter-spacing:-.04em;font-weight:600;text-shadow:0 1px #fff}
+.sub{margin-top:14px;color:var(--dourado);font-size:22px;font-style:italic;letter-spacing:.04em}.rule{width:130px;height:2px;margin:18px auto 16px;background:linear-gradient(90deg,transparent,var(--dourado),transparent)}
+.small{margin:0 0 5px;font:13px Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b5c47}.to{font-size:clamp(30px,3.3vw,42px);margin:2px 0 8px;color:var(--verde);font-style:italic}.message{max-width:620px;margin:0 auto 20px;font-size:17px;line-height:1.5;color:#5a4d3c}
+.btn{border:0;border-radius:999px;background:var(--verde);color:#fff;padding:15px 30px;font:700 16px Arial,sans-serif;cursor:pointer;box-shadow:0 7px 18px rgba(23,61,52,.18)}
+.footer{margin-top:22px;display:flex;justify-content:center;gap:26px;font:700 10px Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;color:#76664d}
+.section{display:none}.section.show{display:block}.paper{position:relative;max-width:850px;margin:24px auto;background:linear-gradient(90deg,rgba(184,148,82,.05),transparent 9%,transparent 91%,rgba(184,148,82,.05)),var(--papel);border:1px solid var(--linha);border-radius:18px;padding:clamp(26px,5vw,50px);box-shadow:0 18px 45px rgba(48,36,20,.09)}
+.paper:before{content:"";position:absolute;inset:10px;border:1px solid rgba(184,148,82,.22);border-radius:13px;pointer-events:none}.paper p{font-size:17px;line-height:1.78}.hello{font-size:24px!important;color:var(--verde);font-style:italic}.quote{border-left:4px solid var(--dourado);padding:15px 17px;background:#fffdf8;border-radius:8px}
+.gift{position:relative;background:linear-gradient(180deg,#fffdfa,#fbf5e9);border:1px solid #d8c69b;border-radius:18px;padding:26px;margin:30px 0}.gift h3{font-size:25px;color:var(--verde);margin:4px 0 10px}.gift .type{font:700 11px Arial,sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--dourado)}.gift a{color:var(--verde);font:700 14px Arial,sans-serif;text-decoration:none;border-bottom:1px solid var(--dourado)}
+.prompt-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}.prompt{border:1px solid var(--linha);border-radius:14px;background:linear-gradient(180deg,#fff,#fdf9f1);padding:16px;cursor:pointer}.prompt strong{display:block;color:var(--verde);margin-bottom:6px}.prompt span{display:none;font-size:14px;line-height:1.5}.prompt.open span{display:block}
+.writebox{min-height:430px;width:100%;border:0;border-radius:12px;background:repeating-linear-gradient(#fffefb,#fffefb 31px,#e9e1d1 32px);padding:18px 20px;font:17px/32px Georgia,serif;resize:vertical;outline:1px solid #d7cfbf}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.secondary{background:#fffaf2;color:var(--verde);border:1px solid #d8c69b;box-shadow:none}.status{font:13px/1.5 Arial,sans-serif;color:var(--muted);margin-top:10px}.review{white-space:pre-wrap;background:#fff;border:1px solid var(--linha);border-radius:14px;padding:22px;line-height:1.75;min-height:160px}.seal{width:116px;height:116px;border-radius:50%;margin:24px auto 12px;background:radial-gradient(circle at 35% 30%,#c6a86c,#b89452 45%,#8d6b34);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font:700 13px Arial,sans-serif;letter-spacing:.06em;box-shadow:inset 0 0 0 7px rgba(255,255,255,.16),0 8px 18px rgba(92,65,28,.20)}
+h2{color:var(--verde);font-size:28px;margin-top:0}
+@media(max-width:900px){.wrap{padding:10px 8px 28px}.envelope{width:calc(100vw - 16px);aspect-ratio:16/10;padding:26px 24px 24px;border-radius:20px}.envelope:before{border-left-width:500px;border-right-width:500px;border-top-width:250px}.topline{top:18px}.mark{top:56px;width:48px;height:48px}.inner{width:82%;padding-top:46px}h1{font-size:clamp(38px,8vw,62px)}.sub{font-size:19px}.message{font-size:15px}}
+@media(max-width:620px){.envelope{aspect-ratio:16/11;padding-left:16px;padding-right:16px}.inner{width:92%;padding-top:38px}h1{font-size:clamp(32px,10vw,48px)}.sub{font-size:17px}.to{font-size:28px}.message{font-size:14px;line-height:1.4;margin-bottom:15px}.btn{padding:13px 24px;font-size:15px}.footer{margin-top:15px}.prompt-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<section class="envelope" id="envelope">
+  <div class="topline">Pesquisa-intervenção em Barrocas</div>
+  <div class="mark">✦</div>
+  <div class="inner">
+    <h1>O que ainda<br>preciso dizer</h1>
+    <div class="sub">Carta de Percurso</div><div class="rule"></div>
+    <p class="small">Uma carta preparada para</p>
+    <p class="to" id="nomeTopo">Coordenadora</p>
+    <p class="message">Há coisas que só encontram lugar quando ganham tempo para ser escritas.</p>
+    <button class="btn" id="abrir">Abrir minha carta</button>
+    <div class="footer"><span>Barrocas • Bahia</span><span>2026</span></div>
+  </div>
+</section>
+<section class="section" id="carta"><div class="paper">
+<p class="hello">Olá, <span id="nomeCarta">coordenadora</span>.</p>
+<p id="mensagemPersonalizada"></p>
+<p>Ao longo dos encontros, muitas coisas poderão ser ditas, escritas, discutidas e colocadas em circulação. Mas nem tudo cabe no coletivo. Há dúvidas que parecem pequenas demais para serem ditas em voz alta; há questões difíceis de compartilhar; há experiências que só conseguimos compreender quando encontramos tempo para olhar para elas com mais calma.</p>
+<p>Esta carta é um espaço reservado para isso. Ela não é uma avaliação, não precisa ter linguagem acadêmica e não há uma forma certa de escrever. O mais importante é que você possa registrar aquilo que considera necessário para que sua experiência como coordenadora pedagógica seja verdadeiramente escutada.</p>
+<div class="quote">Esta carta será lida apenas pela pesquisadora e não será exibida nem lida ao grupo. Questões, necessidades e contribuições poderão ser consideradas, sempre de forma anonimizada e sistematizada, na análise da pesquisa e na construção coletiva do Referencial da Coordenação Pedagógica de Barrocas, sem identificação da autoria e sem reprodução da carta.</div>
+<div class="gift"><div class="type" id="giftType">Música</div><h3>Algo me fez lembrar de você</h3><p><strong id="giftTitle"></strong></p><p id="giftWhy"></p><a id="giftLink" target="_blank" rel="noopener">Abrir esta escolha</a></div>
+<p><strong>Um abraço carinhoso,<br>Nanny Oliveira</strong></p>
+<div class="actions"><button class="btn" id="irEscrita">Quero escrever minha carta</button></div>
+</div></section>
+<section class="section" id="escrita"><div class="paper"><h2>O que ainda precisa ser dito por você?</h2><p>Você não precisa responder a tudo. As pistas abaixo existem apenas para ajudar a pensar. Abra as que quiser — ou simplesmente escreva livremente.</p>
+<div class="prompt-cards">
+<div class="prompt"><strong>Minha trajetória</strong><span>Olhando para sua trajetória até aqui, o que você ainda gostaria que eu compreendesse sobre como foi — ou está sendo — tornar-se coordenadora pedagógica?</span></div>
+<div class="prompt"><strong>O que precisei aprender</strong><span>O que você precisou aprender nesse percurso e ninguém lhe ensinou diretamente? O que foi descobrindo, construindo ou ainda tentando compreender?</span></div>
+<div class="prompt"><strong>O que não consegui dizer</strong><span>Que dúvida, dificuldade, insegurança, descoberta ou pergunta você carrega e talvez nunca tenha conseguido colocar no coletivo?</span></div>
+<div class="prompt"><strong>O que gostaria de ter encontrado</strong><span>O que você gostaria de ter encontrado quando chegou à coordenação — em termos de apoio, orientação, conhecimento, relações, tempo, condições ou referências para realizar o trabalho?</span></div>
+<div class="prompt"><strong>Para o Referencial</strong><span>Se o Referencial da Coordenação Pedagógica de Barrocas pudesse realmente apoiar quem exerce a coordenação pedagógica, o que não poderia faltar nele?</span></div>
+<div class="prompt"><strong>O que ainda quero registrar</strong><span>Há algo que não apareceu nos encontros e que você considera importante deixar registrado aqui?</span></div>
+</div>
+<textarea class="writebox" id="texto" placeholder="Escreva aqui a sua carta..."></textarea>
+<div class="status" id="status">Seu texto é salvo automaticamente neste dispositivo enquanto você escreve.</div>
+<div class="actions"><button class="btn secondary" id="voltarCarta">Voltar à carta</button><button class="btn" id="revisar">Revisar antes de lacrar</button></div>
+</div></section>
+<section class="section" id="revisao"><div class="paper"><h2>Revise sua carta</h2><p>Leia com calma. Se quiser mudar alguma coisa, volte e edite. Nada será perdido.</p><div class="review" id="reviewText"></div><div class="actions"><button class="btn secondary" id="editar">Voltar e editar</button><button class="btn" id="lacrar">Lacrar minha carta</button></div></div></section>
+<section class="section" id="final"><div class="paper" style="text-align:center"><div class="seal">CARTA<br>DE PERCURSO</div><h2>Sua carta foi lacrada.</h2><p>Esta versão publicada ainda não envia a carta à pesquisadora. O envio seguro será ativado na próxima etapa.</p><button class="btn secondary" id="reabrir">Reabrir antes do envio</button></div></section>
+</main>
+<script>
+const p=new URLSearchParams(location.search),get=k=>p.get(k)||"",nome=get("nome")||"Coordenadora";
+nomeTopo.textContent=nome;nomeCarta.textContent=nome;
+mensagemPersonalizada.textContent=get("mensagem")||"Esta carta foi preparada pensando no seu percurso e no que ainda pode precisar de um espaço só seu para ser dito.";
+giftType.textContent=get("tipo")||"Música";giftTitle.textContent=get("titulo")||"Uma escolha preparada especialmente para você";giftWhy.textContent=get("porque")||"Este espaço receberá a mensagem escrita pela pesquisadora explicando por que esta escolha a fez lembrar de você.";
+const link=get("link");if(link)giftLink.href=link;else{giftLink.removeAttribute("href");giftLink.textContent="O link aparecerá aqui quando a pesquisadora inserir."}
+const codigo=get("codigo")||"demo",key="carta_percurso_texto_"+codigo,texto=document.getElementById("texto");texto.value=localStorage.getItem(key)||"";
+texto.addEventListener("input",()=>{localStorage.setItem(key,texto.value);status.textContent="Salvo automaticamente neste dispositivo."});
+document.querySelectorAll(".prompt").forEach(el=>el.onclick=()=>el.classList.toggle("open"));
+const sections=["carta","escrita","revisao","final"];function show(id){sections.forEach(s=>document.getElementById(s).classList.remove("show"));document.getElementById(id).classList.add("show");document.getElementById(id).scrollIntoView({behavior:"smooth",block:"start"})}
+abrir.onclick=()=>{envelope.style.display="none";show("carta")};irEscrita.onclick=()=>show("escrita");voltarCarta.onclick=()=>show("carta");revisar.onclick=()=>{reviewText.textContent=texto.value||"(Sua carta ainda está em branco.)";show("revisao")};editar.onclick=()=>show("escrita");lacrar.onclick=()=>show("final");reabrir.onclick=()=>show("escrita");
+</script></body></html>
