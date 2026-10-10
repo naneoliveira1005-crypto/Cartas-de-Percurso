@@ -67,17 +67,122 @@ h2{color:var(--verde);font-size:28px;margin-top:0}
 <div class="actions"><button class="btn secondary" id="voltarCarta">Voltar à carta</button><button class="btn" id="revisar">Revisar antes de lacrar</button></div>
 </div></section>
 <section class="section" id="revisao"><div class="paper"><h2>Revise sua carta</h2><p>Leia com calma. Se quiser mudar alguma coisa, volte e edite. Nada será perdido.</p><div class="review" id="reviewText"></div><div class="actions"><button class="btn secondary" id="editar">Voltar e editar</button><button class="btn" id="lacrar">Lacrar minha carta</button></div></div></section>
-<section class="section" id="final"><div class="paper" style="text-align:center"><div class="seal">CARTA<br>DE PERCURSO</div><h2>Sua carta foi lacrada.</h2><p>Esta versão publicada ainda não envia a carta à pesquisadora. O envio seguro será ativado na próxima etapa.</p><button class="btn secondary" id="reabrir">Reabrir antes do envio</button></div></section>
+<section class="section" id="final"><div class="paper" style="text-align:center"><div class="seal">CARTA<br>DE PERCURSO</div><h2>Sua carta foi lacrada e enviada.</h2><p>Ela foi registrada com segurança e ficará acessível apenas à pesquisadora. Obrigada por confiar a este percurso aquilo que você escolheu dizer.</p></div></section>
 </main>
 <script>
-const p=new URLSearchParams(location.search),get=k=>p.get(k)||"",nome=get("nome")||"Coordenadora";
-nomeTopo.textContent=nome;nomeCarta.textContent=nome;
-mensagemPersonalizada.textContent=get("mensagem")||"Esta carta foi preparada pensando no seu percurso e no que ainda pode precisar de um espaço só seu para ser dito.";
-giftType.textContent=get("tipo")||"Música";giftTitle.textContent=get("titulo")||"Uma escolha preparada especialmente para você";giftWhy.textContent=get("porque")||"Este espaço receberá a mensagem escrita pela pesquisadora explicando por que esta escolha a fez lembrar de você.";
-const link=get("link");if(link)giftLink.href=link;else{giftLink.removeAttribute("href");giftLink.textContent="O link aparecerá aqui quando a pesquisadora inserir."}
-const codigo=get("codigo")||"demo",key="carta_percurso_texto_"+codigo,texto=document.getElementById("texto");texto.value=localStorage.getItem(key)||"";
-texto.addEventListener("input",()=>{localStorage.setItem(key,texto.value);status.textContent="Salvo automaticamente neste dispositivo."});
+const SUPABASE_URL="https://zpsjuxusydfbptjotyxo.supabase.co";
+const SUPABASE_KEY="sb_publishable_n7giA7FAUqRmj1zv2JF8og_VQbjrxa7";
+const p=new URLSearchParams(location.search);
+const token=(p.get("token")||"").trim();
+const texto=document.getElementById("texto");
+const statusEl=document.getElementById("status");
+let codigo="carta", enviada=false, saveTimer=null;
+
+async function rpc(nome,args){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nome}`,{
+    method:"POST",
+    headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify(args)
+  });
+  const raw=await r.text();
+  if(!r.ok) throw new Error(raw||"Falha na comunicação.");
+  return raw?JSON.parse(raw):null;
+}
+
+function mostrarErro(msg){
+  document.getElementById("nomeTopo").textContent="Link indisponível";
+  document.querySelector(".message").textContent=msg;
+  document.getElementById("abrir").style.display="none";
+}
+
+async function carregar(){
+  if(token.length<24){mostrarErro("Este link individual não é válido. Confira o endereço recebido.");return;}
+  try{
+    const d=await rpc("carta_percurso_carregar",{p_token:token});
+    const part=d.participante||{};
+    codigo=part.codigo||"carta";
+    enviada=!!part.carta_enviada || d.resposta?.status==="enviada";
+    nomeTopo.textContent=part.nome||"Coordenadora";
+    nomeCarta.textContent=part.nome||"coordenadora";
+    mensagemPersonalizada.textContent=part.mensagem||"Esta carta foi preparada pensando no seu percurso e no que ainda pode precisar de um espaço só seu para ser dito.";
+
+    const presente=part.presente||{};
+    const gift=document.querySelector(".gift");
+    if(presente.titulo){
+      gift.style.display="block";
+      giftType.textContent=presente.tipo||"Presente de percurso";
+      giftTitle.textContent=presente.titulo;
+      giftWhy.textContent=presente.motivo||"";
+      if(presente.link){giftLink.href=presente.link;giftLink.textContent="Abrir esta escolha";}
+      else{giftLink.removeAttribute("href");giftLink.style.display="none";}
+    }else{
+      gift.style.display="none";
+    }
+
+    const key="carta_percurso_texto_"+codigo;
+    const remoto=d.resposta?.texto||"";
+    const local=localStorage.getItem(key)||"";
+    texto.value=remoto||local;
+    if(enviada){
+      envelope.style.display="none";
+      document.querySelector("#final h2").textContent="Sua carta já foi lacrada e enviada.";
+      show("final");
+    }
+  }catch(e){
+    console.error(e);
+    mostrarErro("Não foi possível abrir esta carta. O link pode estar inválido ou desativado.");
+  }
+}
+
+async function salvar(statusFinal="rascunho"){
+  if(enviada) return;
+  const key="carta_percurso_texto_"+codigo;
+  try{
+    statusEl.textContent=statusFinal==="enviada"?"Enviando sua carta...":"Salvando com segurança...";
+    const r=await rpc("carta_percurso_salvar",{p_token:token,p_texto:texto.value,p_status:statusFinal});
+    if(statusFinal==="enviada"){
+      enviada=true;
+      localStorage.removeItem(key);
+      show("final");
+    }else{
+      statusEl.textContent="Salvo com segurança.";
+    }
+    return r;
+  }catch(e){
+    console.error(e);
+    statusEl.textContent="Não foi possível salvar agora. Seu texto continua guardado neste dispositivo.";
+    throw e;
+  }
+}
+
+texto.addEventListener("input",()=>{
+  const key="carta_percurso_texto_"+codigo;
+  localStorage.setItem(key,texto.value);
+  statusEl.textContent="Salvo neste dispositivo. Sincronizando...";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>salvar("rascunho").catch(()=>{}),1400);
+});
+
 document.querySelectorAll(".prompt").forEach(el=>el.onclick=()=>el.classList.toggle("open"));
-const sections=["carta","escrita","revisao","final"];function show(id){sections.forEach(s=>document.getElementById(s).classList.remove("show"));document.getElementById(id).classList.add("show");document.getElementById(id).scrollIntoView({behavior:"smooth",block:"start"})}
-abrir.onclick=()=>{envelope.style.display="none";show("carta")};irEscrita.onclick=()=>show("escrita");voltarCarta.onclick=()=>show("carta");revisar.onclick=()=>{reviewText.textContent=texto.value||"(Sua carta ainda está em branco.)";show("revisao")};editar.onclick=()=>show("escrita");lacrar.onclick=()=>show("final");reabrir.onclick=()=>show("escrita");
+const sections=["carta","escrita","revisao","final"];
+function show(id){
+  sections.forEach(s=>document.getElementById(s).classList.remove("show"));
+  document.getElementById(id).classList.add("show");
+  document.getElementById(id).scrollIntoView({behavior:"smooth",block:"start"});
+}
+abrir.onclick=()=>{envelope.style.display="none";show("carta")};
+irEscrita.onclick=()=>show("escrita");
+voltarCarta.onclick=()=>show("carta");
+revisar.onclick=()=>{reviewText.textContent=texto.value||"(Sua carta ainda está em branco.)";show("revisao")};
+editar.onclick=()=>show("escrita");
+lacrar.onclick=async()=>{
+  if(!texto.value.trim()){alert("Escreva algo antes de lacrar a carta.");return;}
+  if(!confirm("Depois de lacrada e enviada, a carta não poderá mais ser editada. Deseja enviar?"))return;
+  const b=document.getElementById("lacrar");
+  b.disabled=true;
+  try{await salvar("enviada");}
+  catch{alert("Não foi possível enviar a carta. Tente novamente.");b.disabled=false;}
+};
+
+carregar();
 </script></body></html>
