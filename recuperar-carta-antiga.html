@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recuperar carta antiga</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f7f3ea;color:#203c34;margin:0;padding:24px}
+.wrap{max-width:760px;margin:0 auto;background:#fffdf8;border:1px solid #d8c69b;border-radius:18px;padding:28px;box-shadow:0 12px 30px rgba(0,0,0,.07)}
+h1{margin-top:0}.note{color:#6b6258;line-height:1.55}
+button{background:#173d34;color:#fff;border:0;border-radius:999px;padding:12px 20px;font-weight:700;cursor:pointer}
+.item{margin-top:18px;padding:16px;border:1px solid #dfd5c5;border-radius:12px;background:#fff}
+textarea{width:100%;min-height:220px;margin-top:8px;padding:12px;border:1px solid #d0c6b6;border-radius:10px;font:16px/1.5 Georgia,serif}
+.small{font-size:12px;color:#746b61}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Recuperar uma carta antiga</h1>
+<p class="note">Esta página procura apenas neste navegador por textos antigos da Carta de Percurso. Nada é enviado para servidor. Para funcionar, abra no mesmo aparelho e navegador usados quando a carta foi escrita.</p>
+<button id="buscar">Procurar carta salva</button>
+<div id="resultado"></div>
+<script>
+const out=document.getElementById('resultado');
+document.getElementById('buscar').onclick=()=>{
+  out.innerHTML='';
+  const achados=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    const kl=(k||'').toLowerCase();
+    if(kl.includes('carta')||kl.includes('percurso')||kl.includes('texto')||kl.includes('resposta')){
+      const v=localStorage.getItem(k);
+      if(v && v.trim()) achados.push([k,v]);
+    }
+  }
+  if(!achados.length){
+    out.innerHTML='<p class="note">Nenhum texto antigo foi encontrado neste navegador. Se a carta foi escrita em outro aparelho ou navegador, abra esta página nele.</p>';
+    return;
+  }
+  achados.forEach(([k,v])=>{
+    const d=document.createElement('div'); d.className='item';
+    const t=document.createElement('div'); t.className='small'; t.textContent='Registro encontrado: '+k;
+    const a=document.createElement('textarea'); a.value=v;
+    d.appendChild(t); d.appendChild(a); out.appendChild(d);
+  });
+};
+</script></div></body></html>
