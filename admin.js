@@ -30,10 +30,39 @@ function previewModule(m){
  if(qs.length)app.append(el('p','Esta é uma visualização. Ela não envia respostas nem altera registros das coordenadoras. Na tela delas, estão disponíveis as opções Salvar rascunho e Enviar registro.','notice'));
  app.append(btn('← Voltar ao meu painel',render));
 }
+async function painelAcessos(){
+ add(app,el('h2','Acessos individuais das coordenadoras'),el('p','Cada coordenadora recebe um link pronto para abrir seu percurso. As chaves existentes continuam válidas e não foram alteradas.','muted'));
+ const sec=el('section',undefined,'card'),person=select([['','Escolha a coordenadora'],...data.participantes.map(p=>[p.id,p.codigo+' — '+p.nome])]),detail=el('div'),status=el('p','Selecione uma coordenadora para consultar seu link.','muted');
+ person.setAttribute('aria-label','Coordenadora para acesso individual');
+ add(sec,el('h3','Copiar um acesso por vez'),person,status,detail);
+ app.append(sec);
+ let links=[];
+ try{
+  const r=await fetch(API+'percurso_links_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
+  if(!r.ok)throw Error('Não foi possível consultar os links.');
+  links=await r.json();
+  if(!Array.isArray(links))throw Error('Resposta inválida.');
+  status.textContent=links.length+' links individuais disponíveis. Escolha a pessoa antes de copiar.';
+ }catch(e){status.textContent='Não foi possível carregar os acessos. Atualize o painel ou verifique a conexão.';status.classList.add('error');}
+ person.onchange=()=>{
+  detail.replaceChildren();
+  const item=links.find(x=>x.participante_id===person.value);
+  if(!item){if(person.value)detail.append(el('p','Não encontramos um link válido para esta coordenadora.','error'));return;}
+  const p=data.participantes.find(x=>x.id===person.value);
+  const address=el('input');address.readOnly=true;address.value=item.link;address.setAttribute('aria-label','Link individual');
+  const copy=btn('Copiar link de '+(p?.nome||item.codigo),async()=>{
+   try{await navigator.clipboard.writeText(item.link);status.textContent='Link copiado para '+(p?.nome||item.codigo)+'. Compartilhe apenas com essa pessoa.';}
+   catch{address.focus();address.select();status.textContent='Selecione e copie o link exibido no campo.';}
+  });
+  add(detail,el('p','Acesso de '+(p?.nome||item.codigo)),address,copy,el('p','O link já contém a chave. A coordenadora só precisa clicar nele. Não envie a lista completa ao grupo.','muted'));
+ };
+ const note=el('section',undefined,'card');add(note,el('h3','Visualizar atividades e respostas'),el('p','Para ver as perguntas: abra E1 ou E2 à esquerda e escolha Atividade individual. Para ler os registros: escolha Registros e selecione a coordenadora. No E1, os arquivos originais aparecem nessa mesma aba.','muted'));app.append(note);
+}
 let encontroAtual='e2',abaAtual='atividade';
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}
 function render(){
  app=montarPainel({modulos:data.modulos.filter(m=>/^e\d$/.test(m.id)),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':'atividade';render();},sair:sairPainel});
+ if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
  if(encontroAtual==='inicio'){add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id))){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn(m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,''),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
  const m=data.modulos.find(x=>x.id===encontroAtual);if(!m)return;
@@ -47,7 +76,7 @@ function render(){
   c.questoes.forEach((q,i)=>{const d=el('details',undefined,'question');d.open=i===0;const field=el('textarea');field.readOnly=true;field.placeholder='Espaço de escrita da coordenadora';field.id='preview-'+q.id;const label=el('label',q.pergunta);label.htmlFor=field.id;add(d,el('summary',(i+1)+'  '+q.titulo.replace(/^\d+[.\s—–-]*/,'')),label,field);app.append(d);});app.append(el('p','Nesta visualização, os registros das participantes não são alterados.','muted'));return;
  }
  if(abaAtual==='registros'){
-  const who=select([['','Selecione uma coordenadora'],...data.participantes.map(p=>[p.id,p.nome])]);who.setAttribute('aria-label','Coordenadora');app.append(who);const box=el('div');app.append(box);const show=()=>{box.replaceChildren();if(!who.value){box.append(el('p','Escolha um nome para consultar os registros deste encontro.','empty'));return;}const rows=data.registros.filter(r=>r.modulo===m.id&&r.participante_id===who.value);for(const r of rows){const card=el('section',undefined,'block');add(card,el('h3',(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')),el('p',date(r.atualizado_em),'muted'));for(const [k,v] of Object.entries(r.respostas||{}))add(card,el('strong',m.conteudo?.questoes?.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v,'read'));box.append(card);}if(m.id==='e1')renderArquivos(box,{p_chave:chave},true,data.participantes,{participante:who.value});else if(!rows.length)box.append(el('p','Ainda não há registro desta coordenadora neste encontro.','empty'));};who.onchange=show;show();return;
+  add(app,el('h3','Registros individuais das coordenadoras'),el('p','Escolha um nome abaixo para consultar o que foi registrado neste encontro. As respostas aparecem apenas no painel da pesquisadora.','muted'));const who=select([['','Selecione uma coordenadora'],...data.participantes.map(p=>[p.id,p.nome])]);who.setAttribute('aria-label','Coordenadora');app.append(who);const box=el('div');app.append(box);const show=()=>{box.replaceChildren();if(!who.value){box.append(el('p','Escolha um nome para consultar os registros deste encontro.','empty'));return;}const rows=data.registros.filter(r=>r.modulo===m.id&&r.participante_id===who.value);for(const r of rows){const card=el('section',undefined,'block');add(card,el('h3',(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')),el('p',date(r.atualizado_em),'muted'));for(const [k,v] of Object.entries(r.respostas||{}))add(card,el('strong',m.conteudo?.questoes?.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v,'read'));box.append(card);}if(m.id==='e1')renderArquivos(box,{p_chave:chave},true,data.participantes,{participante:who.value});else if(!rows.length)box.append(el('p','Ainda não há registro desta coordenadora neste encontro.','empty'));};who.onchange=show;show();return;
  }
  if(abaAtual==='materiais'){if(m.id==='e1')renderArquivos(app,{p_chave:chave},false,data.participantes,{coletivo:true});const mats=data.materiais.filter(x=>x.modulo===m.id);for(const x of mats){if(!/^https:\/\//i.test(x.url))continue;const a=el('a',x.titulo+(x.liberado?'':' · Oculto'));a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';app.append(add(el('p'),a));}if(m.id!=='e1'&&!mats.length)app.append(el('p','Ainda não há materiais publicados neste encontro.','empty'));}
 }
