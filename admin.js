@@ -58,6 +58,15 @@ async function painelAcessos(){
  };
  const note=el('section',undefined,'card');add(note,el('h3','Visualizar atividades e respostas'),el('p','Para ver as perguntas: abra E1 ou E2 à esquerda e escolha Atividade individual. Para ler os registros: escolha Registros e selecione a coordenadora. No E1, os arquivos originais aparecem nessa mesma aba.','muted'));app.append(note);
 }
+async function mensagensRespostasAdmin(){
+ const r=await fetch(API+'percurso_respostas_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
+ if(!r.ok)throw Error('Não foi possível consultar as respostas da pesquisadora.');
+ const x=await r.json();if(!Array.isArray(x))throw Error('Resposta inválida.');return x;
+}
+async function enviarRespostaPesquisadora(registro,texto){
+ const r=await fetch(API+'percurso_responder_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_registro_id:registro,p_texto:texto})});
+ const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível enviar a resposta.');return x;
+}
 let encontroAtual='e2',abaAtual='atividade';
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}
 function render(){
@@ -76,7 +85,38 @@ function render(){
   c.questoes.forEach((q,i)=>{const d=el('details',undefined,'question');d.open=i===0;const field=el('textarea');field.readOnly=true;field.placeholder='Espaço de escrita da coordenadora';field.id='preview-'+q.id;const label=el('label',q.pergunta);label.htmlFor=field.id;add(d,el('summary',(i+1)+'  '+q.titulo.replace(/^\d+[.\s—–-]*/,'')),label,field);app.append(d);});app.append(el('p','Nesta visualização, os registros das participantes não são alterados.','muted'));return;
  }
  if(abaAtual==='registros'){
-  add(app,el('h3',m.id==='livre'?'Mensagens e perguntas recebidas':'Registros individuais das coordenadoras'),el('p','Escolha um nome abaixo para consultar o que foi registrado neste encontro. As respostas aparecem apenas no painel da pesquisadora.','muted'));const who=select([[m.id==='livre'?'todos':'',m.id==='livre'?'Todas as coordenadoras':'Selecione uma coordenadora'],...data.participantes.map(p=>[p.id,p.nome])]);who.setAttribute('aria-label','Coordenadora');app.append(who);const box=el('div');app.append(box);const show=()=>{box.replaceChildren();if(!who.value){box.append(el('p','Escolha um nome para consultar os registros deste encontro.','empty'));return;}const rows=data.registros.filter(r=>r.modulo===m.id&&(who.value==='todos'||r.participante_id===who.value));for(const r of rows){const card=el('section',undefined,'block');const pessoa=data.participantes.find(p=>p.id===r.participante_id);add(card,el('h3',(m.id==='livre'?(pessoa?.nome||'Coordenadora')+' · ':'')+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')),el('p',date(r.atualizado_em),'muted'));for(const [k,v] of Object.entries(r.respostas||{}))add(card,el('strong',m.conteudo?.questoes?.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v,'read'));box.append(card);}if(m.id==='e1')renderArquivos(box,{p_chave:chave},true,data.participantes,{participante:who.value});else if(!rows.length)box.append(el('p',m.id==='livre'?'Ainda não há mensagens registradas nesse espaço.':'Ainda não há registro desta coordenadora neste encontro.','empty'));};who.onchange=show;show();return;
+  add(app,el('h3',m.id==='livre'?'Mensagens e perguntas recebidas':'Registros individuais das coordenadoras'),el('p',m.id==='livre'?'Leia cada mensagem e escreva uma resposta. A coordenadora verá sua resposta no próprio percurso ao voltar ao site.':'Escolha uma coordenadora para consultar os registros individuais deste encontro.','muted'));
+  const who=select([[m.id==='livre'?'todos':'',m.id==='livre'?'Todas as coordenadoras':'Selecione uma coordenadora'],...data.participantes.map(p=>[p.id,p.nome])]);
+  who.setAttribute('aria-label','Coordenadora');app.append(who);const box=el('div');app.append(box);let respostas=[];
+  const show=()=>{
+   box.replaceChildren();
+   if(!who.value){box.append(el('p','Escolha uma coordenadora para consultar os registros.','empty'));return;}
+   const rows=data.registros.filter(r=>r.modulo===m.id&&(who.value==='todos'||r.participante_id===who.value));
+   for(const r of rows){
+    const card=el('section',undefined,'block'),pessoa=data.participantes.find(p=>p.id===r.participante_id);
+    add(card,el('h3',(m.id==='livre'?(pessoa?.nome||'Coordenadora')+' · ':'')+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')),el('p',date(r.atualizado_em),'muted'));
+    for(const [k,v] of Object.entries(r.respostas||{}))add(card,el('strong',m.conteudo?.questoes?.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v,'read'));
+    if(m.id==='livre'){
+      const respostasDeste=respostas.filter(x=>x.registro_id===r.id);
+      for(const resposta of respostasDeste)add(card,el('h3','Sua resposta · '+date(resposta.criado_em)),el('p',resposta.texto,'read'));
+      if(r.status==='enviado'){
+       const label=el('label','Escrever resposta para '+(pessoa?.nome||'coordenadora')),field=el('textarea'),status=el('p','','status'),b=btn('Enviar resposta',async()=>{
+        if(!field.value.trim())throw Error('Escreva a resposta antes de enviar.');
+        if(!confirm('Enviar sua resposta para '+(pessoa?.nome||'esta coordenadora')+'?'))return;
+        const texto=field.value.trim();const saved=await enviarRespostaPesquisadora(r.id,texto);respostas.push(saved);show();
+       });
+       field.maxLength=12000;field.placeholder='Escreva sua devolutiva. Ela ficará disponível somente para esta coordenadora.';
+       add(card,label,field,b,status);
+      }else card.append(el('p','Este texto é um rascunho; aguarde o envio para responder.','muted'));
+    }
+    box.append(card);
+   }
+   if(m.id==='e1')renderArquivos(box,{p_chave:chave},true,data.participantes,{participante:who.value});
+   else if(!rows.length)box.append(el('p',m.id==='livre'?'Ainda não há mensagens enviadas nesse espaço.':'Ainda não há registros desta coordenadora neste encontro.','empty'));
+  };
+  who.onchange=show;show();
+  if(m.id==='livre')mensagensRespostasAdmin().then(x=>{respostas=x;if(box.isConnected)show();}).catch(()=>{if(box.isConnected)box.prepend(el('p','Não foi possível carregar as devolutivas anteriores. Atualize antes de responder.','error'));});
+  return;
  }
  if(abaAtual==='materiais'){if(m.id==='e1')renderArquivos(app,{p_chave:chave},false,data.participantes,{coletivo:true});const mats=data.materiais.filter(x=>x.modulo===m.id);for(const x of mats){if(!/^https:\/\//i.test(x.url))continue;const a=el('a',x.titulo+(x.liberado?'':' · Oculto'));a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';app.append(add(el('p'),a));}if(m.id!=='e1'&&!mats.length)app.append(el('p','Ainda não há materiais publicados neste encontro.','empty'));}
 }
