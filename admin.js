@@ -38,8 +38,8 @@ function previewModule(m){
  app.append(btn('← Voltar ao meu painel',render));
 }
 async function painelAcessos(){
- add(app,el('h2','Acessos individuais das coordenadoras'),el('p','Cada coordenadora recebe um link pronto para abrir seu percurso. As chaves existentes continuam válidas e não foram alteradas.','muted'));
- const sec=el('section',undefined,'card'),person=select([['','Escolha a coordenadora'],...data.participantes.map(p=>[p.id,p.codigo+' — '+p.nome])]),detail=el('div'),status=el('p','Selecione uma coordenadora para consultar seu link.','muted');
+ add(app,el('h2','Acessos individuais'),el('p','Aqui estão as coordenadoras e a Lumina (conta de teste). Todos os links já permitem entrar sem digitar senha. Nenhuma chave anterior foi alterada.','muted'));
+ const sec=el('section',undefined,'card'),sorted=[...data.participantes].sort((a,b)=>(a.codigo==='TESTE-LUMINA'?-1:b.codigo==='TESTE-LUMINA'?1:a.nome.localeCompare(b.nome,'pt-BR'))),person=select([['','Escolha uma pessoa'],...sorted.map(p=>[p.id,p.codigo==='TESTE-LUMINA'?'LUMINA — Conta de teste':p.codigo+' — '+p.nome])]),detail=el('div'),status=el('p','Selecione uma pessoa para consultar seu link.','muted');
  person.setAttribute('aria-label','Coordenadora para acesso individual');
  add(sec,el('h3','Copiar um acesso por vez'),person,status,detail);
  app.append(sec);
@@ -49,19 +49,19 @@ async function painelAcessos(){
   if(!r.ok)throw Error('Não foi possível consultar os links.');
   links=await r.json();
   if(!Array.isArray(links))throw Error('Resposta inválida.');
-  status.textContent=links.length+' links individuais disponíveis. Escolha a pessoa antes de copiar.';
+  const totalReais=links.filter(x=>x.codigo!=='TESTE-LUMINA').length;const teste=links.some(x=>x.codigo==='TESTE-LUMINA');status.textContent=totalReais+' acessos de coordenadoras e '+(teste?'1 acesso de teste da Lumina':'nenhum acesso de teste')+'. Selecione a pessoa antes de copiar.';
  }catch(e){status.textContent='Não foi possível carregar os acessos. Atualize o painel ou verifique a conexão.';status.classList.add('error');}
  person.onchange=()=>{
   detail.replaceChildren();
   const item=links.find(x=>x.participante_id===person.value);
   if(!item){if(person.value)detail.append(el('p','Não encontramos um link válido para esta coordenadora.','error'));return;}
-  const p=data.participantes.find(x=>x.id===person.value);
+  const p=data.participantes.find(x=>x.id===person.value);const nomeExibicao=p?.codigo==='TESTE-LUMINA'?'Lumina — teste':p?.nome||item.codigo;
   const address=el('input');address.readOnly=true;address.value=item.link;address.setAttribute('aria-label','Link individual');
-  const copy=btn('Copiar link de '+(p?.nome||item.codigo),async()=>{
-   try{await navigator.clipboard.writeText(item.link);status.textContent='Link copiado para '+(p?.nome||item.codigo)+'. Compartilhe apenas com essa pessoa.';}
+  const copy=btn('Copiar link de '+nomeExibicao,async()=>{
+   try{await navigator.clipboard.writeText(item.link);status.textContent='Link copiado para '+nomeExibicao+'. Compartilhe apenas com essa pessoa.';}
    catch{address.focus();address.select();status.textContent='Selecione e copie o link exibido no campo.';}
   });
-  add(detail,el('p','Acesso de '+(p?.nome||item.codigo)),address,copy,el('p','O link já contém a chave. A coordenadora só precisa clicar nele. Não envie a lista completa ao grupo.','muted'));
+  add(detail,el('p','Acesso de '+nomeExibicao),address,copy,el('p',p?.codigo==='TESTE-LUMINA'?'Conta permanente para testar o site. Não faz parte dos registros da pesquisa.':'O link já contém a chave. Envie apenas à respectiva coordenadora.','muted'));
  };
  const note=el('section',undefined,'card');add(note,el('h3','Visualizar atividades e respostas'),el('p','Para ver as perguntas: abra E1 ou E2 à esquerda e escolha Atividade individual. Para ler os registros: escolha Registros e selecione a coordenadora. No E1, os arquivos originais aparecem nessa mesma aba.','muted'));app.append(note);
 }
