@@ -52,3 +52,5 @@
 .dashboard .site-header h1{font-size:21px}
 .dashboard .site-header .brand-byline strong{font-size:10px}
 }
+
+.dashboard .site-header .brand-cover .brand-byline{display:block}
