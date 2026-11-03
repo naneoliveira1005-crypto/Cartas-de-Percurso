@@ -15,7 +15,13 @@ async function enterResearcher(candidate){
  sessionStorage.removeItem('percurso_chave');sessionStorage.setItem('percurso_admin',candidate);location.replace('organizador.html');return true;
 }
 function login(){app.replaceChildren();const box=el('section',undefined,'card login'),h=el('h2','Bem-vinda ao Por Escrito'),label=el('label','Acesso alternativo: cole seu link individual aqui'),input=el('input'),status=el('p','','status');input.id='chave';input.type='password';input.autocomplete='off';label.htmlFor='chave';const form=el('form');const enter=btn('Entrar',()=>{});enter.type='submit';form.onsubmit=async e=>{e.preventDefault();token=chaveDoAcesso(input.value);enter.disabled=true;status.textContent='Conectando…';try{data=await rpc('percurso_carregar',{p_token:token});sessionStorage.removeItem('percurso_admin');sessionStorage.setItem('percurso_chave',token);home();}catch(e){try{if(await enterResearcher(token))return;}catch{}status.textContent=message(e);}finally{enter.disabled=false;}};add(box,h,el('p','Você não precisa criar senha nem digitar códigos. Abra o e-mail da pesquisadora e clique em “ENTRAR NO MEU PERCURSO”.','notice'));add(form,label,input,el('p','Use este campo somente se o botão do e-mail não abrir. Cole o link inteiro recebido, sem compartilhar com outras pessoas.','muted'),enter,status);box.append(form);app.append(box);}
-async function refresh(){data=await rpc('percurso_carregar',{p_token:token});}
+async function refresh(){
+ data=await rpc('percurso_carregar',{p_token:token});
+ if(data?.participante?.codigo?.startsWith('OBS')){
+   const o=await rpc('percurso_observador',{p_token:token});
+   data={participante:o.observadora,modulos:o.modulos||[],materiais:o.materiais||[],registros:[],cartas:[],resumo:o.resumo||{}};
+ }
+}
 function home(){dirty=false;app.replaceChildren();const top=el('div',undefined,'toolbar');add(top,el('h2','Meu Percurso'),btn('Sair',()=>{sessionStorage.removeItem('percurso_chave');token='';data=null;login();},true));add(app,top,el('p','Olá, '+data.participante.nome+'.'),el('p','Escolha um espaço para escrever ou retomar seus registros.','muted'));const grid=el('div',undefined,'grid');for(const m of data.modulos){const c=el('section',undefined,'card');add(c,el('span',m.data_encontro?new Date(m.data_encontro+'T12:00:00').toLocaleDateString('pt-BR'):'No seu tempo','eyebrow'),el('h3',m.titulo));if(m.id==='e2')c.append(el('p','Folha de Percurso · uma experiência, quatro momentos de escrita.'));if(m.id==='livre')c.append(el('p','Espaço opcional, sem prazo. Você pode registrar mais de uma vez.'));c.append(btn(m.tipo==='memoria'?'Revisitar encontro':m.tipo==='carta'?'Abrir minha carta':'Abrir',()=>openModule(m)));grid.append(c);}app.append(grid);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...data.registros,...data.cartas];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const b=btn((r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em),()=>viewRecord(r),true);const row=el('p');row.append(b);hist.append(row);}app.append(hist);mostrarRespostasRecebidas(app);renderArquivos(hist,{p_token:token},true);}
 function back(){if(leave())home();}
 function materialList(m){const box=el('section');for(const a of data.materiais.filter(x=>x.modulo===m.id)){if(!/^https:\/\//i.test(a.url))continue;const p=el('p'),link=el('a',a.titulo);link.href=a.url;link.target='_blank';link.rel='noopener noreferrer';p.append(link);box.append(p);}return box;}
@@ -46,16 +52,23 @@ function montarParticipante(){app=montarPainel({modulos:data.modulos,selecionado
 function home(){dirty=false;encontroAtual='inicio';montarParticipante();
 if(data?.participante?.codigo?.startsWith('OBS')){
  add(app,
-   el('h2','Visão de convidada · Por Escrito'),
-   el('p','Olá, '+data.participante.nome+'. Este acesso foi preparado para que você conheça a dimensão do percurso investigativo e a organização do ambiente.','notice'),
-   el('p','Este perfil é somente leitura. Registros individuais, rascunhos, cartas e produções protegidas das participantes não são exibidos.','muted'),
-   el('h3','Percurso da pesquisa'),
-   el('p','E1 — Entre o que fazemos e o que sabemos · E2 — Tornar-se coordenadora pedagógica · E3 — O que sustenta nossa leitura pedagógica? · Carta de Percurso — O que ainda preciso dizer · E4 — Decisões em situações reais de trabalho · E5 — Construindo referências para o trabalho da coordenação pedagógica · devolução à rede em 2027.','read'),
-   el('h3','Espaços atualmente disponíveis')
+   el('h2','Painel de observação · Por Escrito'),
+   el('p','Olá, '+data.participante.nome+'. Este acesso espelha a organização do percurso da pesquisa em modo somente leitura.','notice'),
+   el('p','Você pode acompanhar a estrutura dos encontros, as atividades planejadas, o estado de liberação e os materiais cadastrados. Não é possível editar, liberar, responder, cadastrar pessoas ou acessar produções individuais.','muted')
  );
- const lista=el('div',undefined,'encounter-list');
- for(const m of data.modulos)lista.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>abrirVisaoConvidada(m)));
- app.append(lista);
+ const resumo=el('section',undefined,'card');
+ add(resumo,el('h3','Visão geral do percurso'));
+ const total=data?.resumo?.participantes_ativas;
+ if(Number.isFinite(Number(total)))resumo.append(el('p',total+' participantes ativas no percurso de pesquisa. Os nomes e registros individuais não são exibidos neste perfil.','muted'));
+ for(const m of data.modulos){
+   const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0);
+   const p=el('p');
+   const abrir=btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>abrirVisaoConvidada(m));
+   p.append(abrir,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s) produzidos','muted'));
+   resumo.append(p);
+ }
+ app.append(resumo);
+ app.append(el('p','Os números acima mostram apenas a movimentação geral do percurso. Nenhum conteúdo individual é disponibilizado.','muted'));
  return;
 }add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));const list=el('div',undefined,'encounter-list');for(const m of data.modulos)list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
 function materiaisLiberadosE2(){
@@ -73,23 +86,42 @@ editor=function(m,r,complemento){encontroAtual=m.id;montarParticipante();editorA
 viewRecord=function(r){encontroAtual=r.modulo;montarParticipante();verAnterior(r);if(r.modulo==='e2')materiaisLiberadosE2();if(r.modulo==='livre'){const h=app.querySelector('h2');if(h)h.textContent='Entre encontros';if(r.status==='enviado')mostrarRespostasRecebidas(app,r.id);}};
 function abrirVisaoConvidada(m){
  encontroAtual=m.id;montarParticipante();
- add(app,btn('← Visão geral',home,true),el('h2',m.titulo),el('p','Visualização de convidada · somente leitura','muted'));
+ add(app,
+   btn('← Visão geral',home,true),
+   el('p',m.id==='livre'?'Escuta / Entre encontros':'Encontros / '+m.id.toUpperCase(),'muted'),
+   el('h2',m.id==='livre'?'Entre encontros':m.titulo),
+   el('p',(m.liberado?'Disponível para as participantes':'Ainda não liberado para as participantes')+' · visualização somente leitura','muted')
+ );
  const c=m.conteudo||{};
  if(c.subtitulo)app.append(el('h3',c.subtitulo));
  for(const p of c.introducao||[])app.append(el('p',p));
- if(Array.isArray(c.questoes)&&c.questoes.length){
-   app.append(el('h3','Questões que organizam este movimento'));
-   c.questoes.forEach((q,i)=>{
-     const b=el('section',undefined,'block');
-     add(b,el('span','Questão '+(i+1),'eyebrow'),el('p',q.pergunta||q.titulo||'','read'));
-     app.append(b);
+ if(c.importante){
+   const note=el('aside',undefined,'notice');
+   for(const p of c.importante)note.append(el('p',p));
+   app.append(note);
+ }
+ const qs=c.questoes||[];
+ if(qs.length){
+   app.append(el('h3','Atividade individual prevista'));
+   qs.forEach((q,i)=>{
+     const d=el('details',undefined,'question');d.open=i===0;
+     d.append(el('summary',(i+1)+'  '+(q.titulo||'Questão')));
+     d.append(el('p',q.pergunta||'','read'));
+     const campo=el('textarea');campo.readOnly=true;campo.placeholder='Campo de escrita da participante — indisponível neste perfil de observação.';
+     d.append(campo);app.append(d);
    });
+ }else{
+   app.append(el('p','O conteúdo detalhado deste espaço ainda não foi configurado.','empty'));
  }
  const mats=data.materiais.filter(x=>x.modulo===m.id&&/^https:\/\//i.test(x.url));
- if(mats.length){app.append(el('h3','Materiais liberados para consulta'),materialList(m));}
- if(m.tipo==='memoria'&&!c.introducao?.length){
-   app.append(el('p','Este movimento reúne memórias e materiais do encontro realizado. Os registros individuais permanecem protegidos e não aparecem neste perfil.'));
- }
+ if(mats.length){
+   app.append(el('h3','Materiais cadastrados'));
+   for(const x of mats){
+     const p=el('p'),a=el('a',x.titulo+(x.liberado?'':' · ainda oculto para as participantes'));
+     a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);app.append(p);
+   }
+ }else app.append(el('p','Ainda não há materiais cadastrados neste espaço.','muted'));
+ app.append(el('p','Este perfil não oferece comandos de edição, liberação, resposta ou acesso a registros individuais.','notice'));
 }
 openModule=function(m){if(data?.participante?.codigo?.startsWith('OBS')){abrirVisaoConvidada(m);return;}encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
 /* A capa é a primeira tela para todas as participantes.
