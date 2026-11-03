@@ -43,7 +43,21 @@ function mostrarRespostasRecebidas(container,registroId=null){
 }
 let encontroAtual='inicio';
 function montarParticipante(){app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,navegar:id=>{if(!leave())return;if(id==='inicio')home();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
-function home(){dirty=false;encontroAtual='inicio';montarParticipante();add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));const list=el('div',undefined,'encounter-list');for(const m of data.modulos)list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
+function home(){dirty=false;encontroAtual='inicio';montarParticipante();
+if(data?.participante?.codigo?.startsWith('OBS')){
+ add(app,
+   el('h2','Visão de convidada · Por Escrito'),
+   el('p','Olá, '+data.participante.nome+'. Este acesso foi preparado para que você conheça a dimensão do percurso investigativo e a organização do ambiente.','notice'),
+   el('p','Este perfil é somente leitura. Registros individuais, rascunhos, cartas e produções protegidas das participantes não são exibidos.','muted'),
+   el('h3','Percurso da pesquisa'),
+   el('p','E1 — Entre o que fazemos e o que sabemos · E2 — Tornar-se coordenadora pedagógica · E3 — O que sustenta nossa leitura pedagógica? · Carta de Percurso — O que ainda preciso dizer · E4 — Decisões em situações reais de trabalho · E5 — Construindo referências para o trabalho da coordenação pedagógica · devolução à rede em 2027.','read'),
+   el('h3','Espaços atualmente disponíveis')
+ );
+ const lista=el('div',undefined,'encounter-list');
+ for(const m of data.modulos)lista.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>abrirVisaoConvidada(m)));
+ app.append(lista);
+ return;
+}add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));const list=el('div',undefined,'encounter-list');for(const m of data.modulos)list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
 function materiaisLiberadosE2(){
  if(encontroAtual!=='e2'||!Array.isArray(data?.materiais))return;
  if(document.getElementById('materiais-e2'))return;
@@ -57,5 +71,25 @@ function materiaisLiberadosE2(){
 const editorAnterior=editor,verAnterior=viewRecord,abrirAnterior=openModule;
 editor=function(m,r,complemento){encontroAtual=m.id;montarParticipante();editorAnterior(m,r,complemento);if(m.id==='livre'&&!complemento){const h=app.querySelector('h2');if(h){h.textContent='Entre encontros';h.after(el('p','Entre um encontro e outro, este espaço permanece aberto para você compartilhar, se desejar, situações vividas na coordenação, dúvidas, reflexões ou mensagens à pesquisadora. Seus registros e as respostas recebidas ficam disponíveis para retomada no seu percurso. A participação é opcional: este espaço não é uma atividade obrigatória e não substitui as propostas de cada encontro.','notice'));}}const blocks=[...app.querySelectorAll('section.block')];blocks.forEach((b,i)=>{const title=b.querySelector('.eyebrow');const d=el('details',undefined,'question');d.open=i===0;d.append(el('summary',(i+1)+'  '+(title?.textContent||'Registro')));if(title)title.remove();while(b.firstChild)d.append(b.firstChild);b.replaceWith(d);});if(m.id==='e2')materiaisLiberadosE2();};
 viewRecord=function(r){encontroAtual=r.modulo;montarParticipante();verAnterior(r);if(r.modulo==='e2')materiaisLiberadosE2();if(r.modulo==='livre'){const h=app.querySelector('h2');if(h)h.textContent='Entre encontros';if(r.status==='enviado')mostrarRespostasRecebidas(app,r.id);}};
-openModule=function(m){encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
+function abrirVisaoConvidada(m){
+ encontroAtual=m.id;montarParticipante();
+ add(app,btn('← Visão geral',home,true),el('h2',m.titulo),el('p','Visualização de convidada · somente leitura','muted'));
+ const c=m.conteudo||{};
+ if(c.subtitulo)app.append(el('h3',c.subtitulo));
+ for(const p of c.introducao||[])app.append(el('p',p));
+ if(Array.isArray(c.questoes)&&c.questoes.length){
+   app.append(el('h3','Questões que organizam este movimento'));
+   c.questoes.forEach((q,i)=>{
+     const b=el('section',undefined,'block');
+     add(b,el('span','Questão '+(i+1),'eyebrow'),el('p',q.pergunta||q.titulo||'','read'));
+     app.append(b);
+   });
+ }
+ const mats=data.materiais.filter(x=>x.modulo===m.id&&/^https:\/\//i.test(x.url));
+ if(mats.length){app.append(el('h3','Materiais liberados para consulta'),materialList(m));}
+ if(m.tipo==='memoria'&&!c.introducao?.length){
+   app.append(el('p','Este movimento reúne memórias e materiais do encontro realizado. Os registros individuais permanecem protegidos e não aparecem neste perfil.'));
+ }
+}
+openModule=function(m){if(data?.participante?.codigo?.startsWith('OBS')){abrirVisaoConvidada(m);return;}encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
 (async()=>{const u=new URL(location.href);const hash=new URLSearchParams(u.hash.slice(1));const incoming=(u.searchParams.get('token')||hash.get('token')||hash.get('chave')||'').trim();if(incoming){u.searchParams.delete('token');u.hash='';history.replaceState(null,'',u.pathname+u.search);}if(!incoming&&sessionStorage.getItem('percurso_admin')){location.replace('organizador.html');return;}token=incoming||sessionStorage.getItem('percurso_chave')||'';if(!token){login();return;}app.textContent='Abrindo seu percurso…';try{await refresh();sessionStorage.removeItem('percurso_admin');sessionStorage.setItem('percurso_chave',token);home();}catch(e){try{if(await enterResearcher(token))return;}catch{}sessionStorage.removeItem('percurso_chave');login();}})();
