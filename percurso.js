@@ -92,4 +92,44 @@ function abrirVisaoConvidada(m){
  }
 }
 openModule=function(m){if(data?.participante?.codigo?.startsWith('OBS')){abrirVisaoConvidada(m);return;}encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
-(async()=>{const u=new URL(location.href);const hash=new URLSearchParams(u.hash.slice(1));const incoming=(u.searchParams.get('token')||hash.get('token')||hash.get('chave')||'').trim();if(incoming){u.searchParams.delete('token');u.hash='';history.replaceState(null,'',u.pathname+u.search);}if(!incoming&&sessionStorage.getItem('percurso_admin')){location.replace('organizador.html');return;}token=incoming||sessionStorage.getItem('percurso_chave')||'';if(!token){login();return;}app.textContent='Abrindo seu percurso…';try{await refresh();sessionStorage.removeItem('percurso_admin');sessionStorage.setItem('percurso_chave',token);home();}catch(e){try{if(await enterResearcher(token))return;}catch{}sessionStorage.removeItem('percurso_chave');login();}})();
+/* A capa é a primeira tela para todas as participantes.
+   O token pessoal permanece restrito à sessão e só abre o percurso após clique. */
+(async()=>{
+ const u=new URL(location.href);
+ const hash=new URLSearchParams(u.hash.slice(1));
+ const incoming=(u.searchParams.get('token')||hash.get('token')||hash.get('chave')||'').trim();
+ if(incoming){u.searchParams.delete('token');u.hash='';history.replaceState(null,'',u.pathname+u.search);}
+ if(!incoming&&sessionStorage.getItem('percurso_admin')){location.replace('organizador.html');return;}
+ token=incoming||sessionStorage.getItem('percurso_chave')||'';
+ if(incoming)sessionStorage.setItem('percurso_chave',incoming);
+ const acesso=document.querySelector('.enter-cta');
+ if(!acesso){if(token){try{await refresh();home();}catch(e){sessionStorage.removeItem('percurso_chave');login();}}else login();return;}
+ acesso.addEventListener('click',async ev=>{
+  ev.preventDefault();
+  if(acesso.dataset.abrindo==='sim')return;
+  if(!token){login();document.getElementById('app').scrollIntoView({block:'start'});return;}
+  acesso.dataset.abrindo='sim';
+  acesso.setAttribute('aria-busy','true');
+  const titulo=acesso.textContent;
+  acesso.textContent='Abrindo seu percurso…';
+  try{
+   await refresh();
+   sessionStorage.removeItem('percurso_admin');
+   sessionStorage.setItem('percurso_chave',token);
+   home();
+   window.scrollTo({top:0,behavior:'auto'});
+  }catch(e){
+   try{if(await enterResearcher(token))return;}catch{}
+   sessionStorage.removeItem('percurso_chave');
+   token='';
+   login();
+   const aviso=document.querySelector('.login .status');
+   if(aviso)aviso.textContent=message(e);
+   document.getElementById('app').scrollIntoView({block:'start'});
+  }finally{
+   acesso.dataset.abrindo='nao';
+   acesso.removeAttribute('aria-busy');
+   acesso.textContent=titulo;
+  }
+ });
+})();
