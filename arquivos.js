@@ -1,19 +1,19 @@
 'use strict';
 async function renderArquivos(container,credenciais,somenteIndividuais=false,participantes=[],filtro={}){
  const box=document.createElement('section');box.className='card';container.append(box);
- const h=document.createElement('h3');h.textContent='Registros originais do E1';box.append(h);
+ const h=document.createElement('h3');h.textContent=filtro.modulo==='e1'?'Registros originais do E1':filtro.modulo==='e2'?'Mapa do Tornar-se — devolutiva do seu grupo':'Arquivos disponíveis no seu percurso';box.append(h);
  const status=document.createElement('p');status.textContent='Carregando arquivos…';status.className='muted';box.append(status);
  async function consultar(id){const r=await fetch('https://zpsjuxusydfbptjotyxo.supabase.co/rest/v1/rpc/percurso_arquivos',{method:'POST',headers:{apikey:'sb_publishable_n7giA7FAUqRmj1zv2JF8og_VQbjrxa7','Content-Type':'application/json'},body:JSON.stringify({...credenciais,p_id:id||null})});if(!r.ok)throw Error('Não foi possível acessar o arquivo. Confira sua conexão e tente novamente.');return r.json();}
  try{
-  const todos=await consultar(),arquivos=todos.filter(a=>(!somenteIndividuais||!a.coletivo)&&(!filtro.participante||a.participante_id===filtro.participante)&&(filtro.coletivo===undefined||a.coletivo===filtro.coletivo));
-  status.textContent='Encontro de 26/10/2026. Arquivos preservados para consulta; a data de inclusão no ambiente não substitui a data do registro original.';
-  if(!arquivos.length){status.textContent='Nenhum registro individual do E1 foi vinculado a este acesso até o momento.';return;}
+  const todos=await consultar(),arquivos=todos.filter(a=>(!somenteIndividuais||!a.coletivo)&&(!filtro.modulo||a.modulo===filtro.modulo)&&(!filtro.participante||a.participante_id===filtro.participante)&&(filtro.coletivo===undefined||a.coletivo===filtro.coletivo));
+  status.textContent=filtro.modulo==='e1'?'Encontro de 26/10/2026. Arquivos preservados para consulta; a data de inclusão não substitui a data original.':filtro.modulo==='e2'?'Após o E2, você encontrará aqui os mapas efetivamente produzidos pelo seu grupo, quando disponibilizados.':'Arquivos do seu percurso preservados para consulta. A data de inclusão não substitui a data do registro original.';
+  if(!arquivos.length){status.textContent=filtro.modulo==='e1'?'Nenhum arquivo do E1 foi vinculado a este acesso até o momento.':filtro.modulo==='e2'?'O mapa do seu grupo ainda não foi disponibilizado.':'Nenhum arquivo foi vinculado a este acesso até o momento.';return;}
   for(const grupo of [{nome:'Meu registro individual',coletivo:false},{nome:'Memória coletiva',coletivo:true}]){
    const lista=arquivos.filter(a=>a.coletivo===grupo.coletivo);if(!lista.length)continue;
-   const title=document.createElement('h3');title.textContent=credenciais.p_chave&&!grupo.coletivo?'Registros individuais e pendentes':grupo.nome;box.append(title);
+   const title=document.createElement('h3');title.textContent=grupo.coletivo?grupo.nome:(filtro.modulo==='e2'?'Material coletivo do seu grupo':credenciais.p_chave?'Registros individuais e pendentes':'Arquivos destinados a você');box.append(title);
    for(const a of lista){
     const row=document.createElement('div');row.className='block';const p=document.createElement('p');const pessoa=participantes.find(p=>p.id===a.participante_id);p.textContent=a.titulo+(pessoa?' · '+pessoa.codigo+' — '+pessoa.nome:'')+(a.pendente?' · Reservado: '+a.nome_pendente:'');row.append(p);
-    const info=document.createElement('p');info.className='muted';info.textContent=a.coletivo?'Material compartilhado com as participantes.':a.pendente?'Aguardando confirmação do cadastro. Disponível somente à pesquisadora.':'Registro individual: acessível somente à participante e à pesquisadora.';row.append(info);
+    const info=document.createElement('p');info.className='muted';info.textContent=a.coletivo?'Material compartilhado com as participantes.':a.pendente?'Aguardando confirmação do cadastro. Disponível somente à pesquisadora.':a.modulo==='e2'?'Mapa produzido coletivamente pelo seu grupo, entregue apenas no seu percurso. Não corresponde à sua Folha individual.':'Registro individual: acessível somente à participante e à pesquisadora.';row.append(info);
     const button=document.createElement('button');button.textContent=a.mime==='application/pdf'?'Baixar PDF':'Baixar documento Word';button.onclick=async()=>{button.disabled=true;const old=button.textContent;button.textContent='Preparando arquivo…';try{const file=await consultar(a.id);const bytes=Uint8Array.from(atob(file.base64.replace(/\s/g,'')),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:file.mime}));const link=document.createElement('a');link.href=url;link.download=file.nome_arquivo;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){info.textContent=e.message;info.classList.add('error');}finally{button.disabled=false;button.textContent=old;}};row.append(button);box.append(row);
    }
   }
