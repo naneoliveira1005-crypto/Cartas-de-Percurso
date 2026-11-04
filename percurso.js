@@ -52,9 +52,9 @@ async function abrirPerfil(){
 
   const intro=el('div',undefined,'perfil-apresentacao');
   add(intro,
-    el('span','UM POUCO SOBRE MIM','eyebrow'),
+    el('span','MUITO SOBRE NÓS','eyebrow'),
     el('h2',perfil.nome),
-    el('p','Este espaço reúne o que você já contou sobre sua trajetória e abre lugar para acrescentar um pouco mais sobre quem você é no trabalho da coordenação/articulação pedagógica.','perfil-lead'),
+    el('p','Este é o seu lugar dentro do nosso percurso. Aqui você pode reconhecer o que já contou sobre sua trajetória e acrescentar, com suas próprias palavras, um pouco mais sobre quem você é no trabalho da coordenação/articulação pedagógica.','perfil-lead'),
     el('p','Complete até 19/11. Você pode salvar e voltar quantas vezes precisar.','notice')
   );
   add(hero,foto,intro);app.append(hero);
@@ -130,7 +130,7 @@ async function abrirPerfil(){
   });
   add(app,el('div',undefined,'perfil-actions'),salvar,status);
  }catch(e){
-  app.replaceChildren(el('h2','Um pouco sobre mim'),el('p','Não foi possível carregar seu perfil agora. Tente novamente.','error'));
+  app.replaceChildren(el('h2','Muito sobre nós'),el('p','Não foi possível carregar seu perfil agora. Tente novamente.','error'));
  }
 }
 
@@ -157,7 +157,7 @@ function mostrarRespostasRecebidas(container,registroId=null){
  }).catch(()=>{if(sec.isConnected)info.textContent='Não foi possível consultar as respostas agora. Tente novamente mais tarde.';});
 }
 let encontroAtual='inicio';
-function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS'),orientadora=!!data?.participante?.codigo?.startsWith('ORI');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,orientadora,navegar:id=>{if(!leave())return;if(id==='inicio')home();else if(id==='orientacao')abrirOrientacao();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
+function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS'),orientadora=!!data?.participante?.codigo?.startsWith('ORI');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,orientadora,navegar:id=>{if(!leave())return;if(id==='inicio')home();else if(id==='sobre_pesquisadora'){encontroAtual=id;montarParticipante();app.append(montarPerfilPesquisadora());}else if(id==='orientacao')abrirOrientacao();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
 
 
 async function abrirOrientacao(){
