@@ -421,3 +421,19 @@ h1,h2,h3,h4{
 @media(max-width:680px){
   .abertura-texto .citacao-site{margin-left:1.5rem}
 }
+
+/* Abertura contínua, sem aparência de blocos comerciais */
+.abertura-texto .daqui-em-diante{
+  margin-top:1rem;
+  padding-top:0;
+  border-top:0;
+}
+.abertura-texto .encerramento-abertura{
+  margin-top:1rem;
+  padding-top:0;
+  border-top:0;
+}
+.abertura-texto .daqui-em-diante p,
+.abertura-texto .encerramento-abertura p{
+  max-width:900px;
+}
