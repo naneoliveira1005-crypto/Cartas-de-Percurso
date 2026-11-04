@@ -437,3 +437,12 @@ h1,h2,h3,h4{
 .abertura-texto .encerramento-abertura p{
   max-width:900px;
 }
+
+/* Ajuste visual do item Novidades no menu */
+.sidebar .nav-item strong{
+  display:block;
+}
+.sidebar .nav-item span{
+  display:block;
+  margin-top:4px;
+}
