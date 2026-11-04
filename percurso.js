@@ -169,7 +169,7 @@ if(data?.participante?.codigo?.startsWith('OBS')){
  for(const m of data.modulos){
    const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0);
    const p=el('p');
-   const abrir=btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>{abaObservadora='sobre';abrirVisaoConvidada(m);});
+   const abrir=btn((m.id==='livre'?'Entre encontros':m.id==='perfil'?'Um pouco sobre mim':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>{abaObservadora='sobre';abrirVisaoConvidada(m);});
    p.append(abrir,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s) produzidos','muted'));
    resumo.append(p);
  }
@@ -207,6 +207,22 @@ function abrirVisaoConvidada(m){
  }
  app.append(tabs);
  const c=m.conteudo||{};
+ if(m.id==='perfil'){
+   add(app,
+     el('h3','Estrutura do perfil individual'),
+     el('p','As participantes encontram aqui seus próprios dados de caracterização já organizados e podem complementar o percurso com textos pessoais e uma foto opcional.','muted')
+   );
+   const demo=el('section',undefined,'perfil-dados-grid');
+   const nomes=['Onde estou','Meu tempo','Meu vínculo','Experiências anteriores'];
+   for(const n of nomes){const a=el('article',undefined,'perfil-dado-card');add(a,el('span',n.toUpperCase(),'eyebrow'),el('p','Informações individuais protegidas neste perfil de observação.','read'));demo.append(a);}
+   app.append(demo);
+   const escrita=el('section',undefined,'perfil-escrita-grid');
+   for(const n of ['Como cheguei até aqui','O que me formou','Uma realização que levo comigo','Um pouco de mim']){
+     const a=el('article',undefined,'perfil-escrita-card');add(a,el('span',n.toUpperCase(),'eyebrow'),el('p','Conteúdo individual não exibido.','read'));escrita.append(a);
+   }
+   app.append(escrita,el('p','Fotos, nomes e textos pessoais das participantes não são disponibilizados às observadoras.','notice'));
+   return;
+ }
  if(abaObservadora==='sobre'){
    if(c.subtitulo)app.append(el('h3',c.subtitulo));
    for(const p of c.introducao||[])app.append(el('p',p));
