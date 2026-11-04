@@ -11,19 +11,23 @@ function montarAberturaPorEscrito(){
  const wrap=document.createElement('section');wrap.className='abertura-por-escrito abertura-texto';
  const titulo=document.createElement('span');titulo.className='eyebrow';titulo.textContent='POR ESCRITO — PERCURSOS DE UMA COORDENADORA';
  const h=document.createElement('h2');h.textContent='Um lugar para pensar a profissão a partir do que vivemos.';
- const p1=document.createElement('p');p1.className='abertura-paragrafo';p1.textContent='A coordenação pedagógica é feita de muitas coisas ao mesmo tempo: escuta, escolhas, encontros, urgências, formação, acompanhamento, perguntas e decisões que nem sempre chegam prontas. Entre o que planejamos e o que de fato acontece, vamos construindo modos de olhar, de agir e de compreender o trabalho.';
- const p2=document.createElement('p');p2.className='abertura-paragrafo';p2.textContent='O Por Escrito nasce como um convite para interromper um pouco a pressa e voltar o olhar para esse percurso. Aqui, não buscamos respostas certas sobre o que significa ser coordenadora. Buscamos palavras para aquilo que vivemos, perguntas para o que ainda não compreendemos e pistas sobre os saberes que vamos construindo no exercício da profissão.';
- const p3=document.createElement('p');p3.className='abertura-paragrafo';p3.textContent='Escrever, neste espaço, é também poder voltar. Voltar a uma situação, a uma escolha, a uma dúvida, a uma lembrança. Às vezes, só quando retomamos o vivido conseguimos perceber o que ele produziu em nós. Talvez por isso faça tanto sentido lembrar que:';
- const ep=document.createElement('blockquote');ep.className='epigrafe';ep.textContent='“A experiência é o que nos passa, o que nos acontece, o que nos toca.”';
+ const p1=document.createElement('p');p1.className='abertura-paragrafo';p1.textContent='A coordenação pedagógica ocupa um lugar singular na escola. É trabalho de acompanhamento, formação, articulação e leitura do cotidiano pedagógico. Exige escuta atenta, repertório profissional, capacidade de fazer perguntas e disposição para rever caminhos. Nem tudo se resolve no momento em que acontece; muitas vezes, é quando voltamos a uma situação, narramos o que vivemos e interrogamos nossas escolhas que começamos a compreender melhor o trabalho.';
+ const p2=document.createElement('p');p2.className='abertura-paragrafo';p2.textContent='O Por Escrito nasceu dentro desta pesquisa para acolher justamente esse movimento. Não é um lugar de respostas prontas nem uma coleção de tarefas. É um espaço para registrar, retomar e acompanhar o percurso de cada coordenadora; guardar perguntas que ainda permanecem; reconhecer saberes construídos no exercício da função; e perceber o que muda quando olhamos novamente para aquilo que vivemos.';
+ const p3=document.createElement('p');p3.className='abertura-paragrafo';p3.textContent='Há acontecimentos que passam por nós sem deixar marcas e há outros que permanecem, nos inquietam, nos deslocam e passam a fazer parte da maneira como pensamos e agimos. É nesse sentido que a experiência ganha força neste percurso:';
+ const ep=document.createElement('blockquote');ep.className='epigrafe citacao-site';ep.textContent='“A experiência é o que nos passa, o que nos acontece, o que nos toca.”';
  const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';
- const p4=document.createElement('p');p4.className='abertura-paragrafo';p4.textContent='É desse lugar que este percurso pretende acompanhar o tornar-se coordenadora: não como uma identidade pronta, mas como uma construção que acontece no trabalho, nas relações, nas escolhas, nos impasses e nas aprendizagens que vão nos formando.';
- const ass=document.createElement('blockquote');ass.className='assinatura-percurso';ass.textContent='“Há percursos que só conseguimos compreender quando encontramos um lugar para escrevê-los.”';
+ const p4=document.createElement('p');p4.className='abertura-paragrafo';p4.textContent='É também por isso que escrever importa. A escrita nos permite demorar um pouco mais sobre o vivido, perceber relações que no ritmo do cotidiano podem escapar e encontrar palavras para aquilo que ainda está em elaboração.';
+ const ass=document.createElement('blockquote');ass.className='assinatura-percurso citacao-site';ass.textContent='“Há percursos que só conseguimos compreender quando encontramos um lugar para escrevê-los.”';
  const assinatura=document.createElement('p');assinatura.className='autor-citacao';assinatura.textContent='Nanny Oliveira';
  const prox=document.createElement('div');prox.className='daqui-em-diante';
- const ph=document.createElement('h3');ph.textContent='O que você vai encontrar daqui para frente';
- const pp=document.createElement('p');pp.textContent='Um espaço para conhecer quem caminha nesta pesquisa, registrar sua própria trajetória, participar dos Encontros de Partilha, retomar materiais e registros, escrever entre um encontro e outro e acompanhar, ao longo do tempo, o que esse percurso vai fazendo aparecer.';
+ const ph=document.createElement('h3');ph.textContent='O que você vai encontrar por aqui';
+ const pp=document.createElement('p');pp.textContent='Ao longo do Por Escrito, você poderá conhecer um pouco de quem conduz a pesquisa, construir e revisitar o seu próprio perfil, acompanhar os Encontros de Partilha, acessar materiais, reler registros já produzidos e escrever entre um encontro e outro quando alguma questão precisar continuar sendo pensada.';
  prox.append(ph,pp);
- wrap.append(titulo,h,p1,p2,p3,ep,fonte,p4,ass,assinatura,prox);return wrap;
+ const fim=document.createElement('div');fim.className='encerramento-abertura';
+ const f1=document.createElement('p');f1.textContent='Quero que este seja um espaço de cuidado com o pensamento e com o trabalho que vocês realizam. Desde que começamos este percurso, tenho aprendido muito com o modo como vocês narram situações, formulam perguntas e dão sentido ao que fazem. O olhar de vocês amplia o meu, desloca minhas certezas e fortalece esta pesquisa.';
+ const f2=document.createElement('p');f2.textContent='Espero que essa troca seja de mão dupla: que, enquanto aprendo com vocês, o Por Escrito também lhes devolva tempo, perguntas e ferramentas para olhar o próprio trabalho com mais nitidez. Que possamos construir este percurso juntas, com confiança, curiosidade e respeito pelo que cada experiência tem de singular.';
+ fim.append(f1,f2);
+ wrap.append(titulo,h,p1,p2,p3,ep,fonte,p4,ass,assinatura,prox,fim);return wrap;
 }
 
 function montarPerfilPesquisadora(){
