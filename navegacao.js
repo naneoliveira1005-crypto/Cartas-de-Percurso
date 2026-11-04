@@ -36,7 +36,8 @@ function montarAberturaPorEscrito(){
  const fim=document.createElement('div');fim.className='encerramento-abertura';
  const f1=document.createElement('p');f1.textContent='Quero que este seja um espaço de cuidado com o pensamento e com o trabalho que vocês realizam. Desde que começamos este percurso, tenho aprendido muito com o modo como vocês narram situações, formulam perguntas e dão sentido ao que fazem. O olhar de vocês amplia o meu, desloca minhas certezas e fortalece esta pesquisa.';
  const f2=document.createElement('p');f2.textContent='Espero que essa troca seja de mão dupla: que, enquanto aprendo com vocês, o Por Escrito também lhes devolva tempo, perguntas e ferramentas para olhar o próprio trabalho com mais nitidez. Que possamos construir este percurso juntas, com confiança, curiosidade e respeito pelo que cada experiência tem de singular.';
- fim.append(f1,f2);
+ const despedida=document.createElement('p');despedida.className='despedida-nanny';despedida.innerHTML='Um abraço carinhoso,<br><strong>Nanny Oliveira</strong>';
+ fim.append(f1,f2,despedida);
  wrap.append(titulo,h,p1,p2,p3,ep,fonte,p4,ass,assinatura,prox,fim);return wrap;
 }
 
