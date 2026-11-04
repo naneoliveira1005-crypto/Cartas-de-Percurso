@@ -92,3 +92,9 @@
 .dashboard .brand-compact-name span{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){.brand-cover-full .enter-cta{transition:none}}
+
+/* Portal da Pesquisadora e demais paineis: preservar a capa integral aprovada. */
+.dashboard .site-header{display:block;width:100%;height:100svh;min-height:520px;overflow:hidden;border:0;background:#f5eddf}
+.dashboard .brand-cover-full{display:flex!important;width:100%;height:100%;min-height:inherit}
+.dashboard .brand-compact{display:none!important}
+@media(max-width:800px){.dashboard .site-header{height:100svh;min-height:490px}}
