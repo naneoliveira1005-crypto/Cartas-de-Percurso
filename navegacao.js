@@ -30,9 +30,8 @@ function montarAberturaPorEscrito(){
  const ass=document.createElement('blockquote');ass.className='assinatura-percurso citacao-site';ass.textContent='“Há percursos que só conseguimos compreender quando encontramos um lugar para escrevê-los.”';
  const assinatura=document.createElement('p');assinatura.className='autor-citacao';assinatura.textContent='Nanny Oliveira';
  const prox=document.createElement('div');prox.className='daqui-em-diante';
- const ph=document.createElement('h3');ph.textContent='O que você vai encontrar por aqui';
  const pp=document.createElement('p');pp.textContent='Ao longo do Por Escrito, você poderá conhecer um pouco de quem conduz a pesquisa, construir e revisitar o seu próprio perfil, acompanhar os Encontros de Partilha, acessar materiais, reler registros já produzidos e escrever entre um encontro e outro quando alguma questão precisar continuar sendo pensada.';
- prox.append(ph,pp);
+ prox.append(pp);
  const fim=document.createElement('div');fim.className='encerramento-abertura';
  const f1=document.createElement('p');f1.textContent='Quero que este seja um espaço de cuidado com o pensamento e com o trabalho que vocês realizam. Desde que começamos este percurso, tenho aprendido muito com o modo como vocês narram situações, formulam perguntas e dão sentido ao que fazem. O olhar de vocês amplia o meu, desloca minhas certezas e fortalece esta pesquisa.';
  const f2=document.createElement('p');f2.textContent='Espero que essa troca seja de mão dupla: que, enquanto aprendo com vocês, o Por Escrito também lhes devolva tempo, perguntas e ferramentas para olhar o próprio trabalho com mais nitidez. Que possamos construir este percurso juntas, com confiança, curiosidade e respeito pelo que cada experiência tem de singular.';
