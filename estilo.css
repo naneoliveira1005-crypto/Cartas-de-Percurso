@@ -171,3 +171,61 @@
 .perfil-pesquisadora-publico .texto-nanny{font-size:17px;line-height:1.75}
 .perfil-pesquisadora-publico .texto-nanny p{max-width:850px}
 @media(max-width:760px){.abertura-paragrafo{font-size:16px}.porta-perfil{min-height:0}.portas-perfis{grid-template-columns:1fr}}
+
+/* Ajustes da abertura e das citações */
+.citacao-site{
+  margin:1.6rem 0 .35rem;
+  padding:1.15rem 1.35rem;
+  border-left:3px solid var(--gold);
+  background:rgba(255,253,248,.7);
+  font:italic clamp(1.12rem,2vw,1.42rem)/1.6 Georgia,serif;
+  color:var(--green);
+}
+.autor-citacao{
+  display:block;
+  width:100%;
+  margin:.2rem 0 1.7rem;
+  text-align:right;
+  padding-right:.35rem;
+  color:var(--muted);
+  font-size:14px;
+  font-style:normal;
+}
+.encerramento-abertura{
+  margin-top:2rem;
+  padding:1.35rem 0 .2rem;
+  border-top:1px solid var(--line);
+}
+.encerramento-abertura p{
+  max-width:900px;
+  font-size:17px;
+  line-height:1.78;
+  margin:0 0 1rem;
+}
+.novidades-painel{margin-top:2rem!important}
+.novidade-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  padding:16px 0;
+  border-bottom:1px solid var(--line);
+}
+.novidade-item:last-child{border-bottom:0}
+.novidade-item strong{display:block;color:var(--green);line-height:1.4}
+.novidade-item p{margin:.3rem 0 0}
+.novidade-nova{position:relative;padding-left:16px}
+.novidade-nova::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:23px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--gold);
+}
+@media(max-width:620px){
+  .novidade-item{align-items:flex-start;flex-direction:column}
+  .novidade-item button{width:100%}
+}
