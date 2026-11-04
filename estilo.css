@@ -125,3 +125,12 @@
  .perfil-foto img,.perfil-iniciais{width:150px;height:150px}
  .perfil-dados-grid,.perfil-escrita-grid{grid-template-columns:1fr}
 }
+
+/* Perfil no painel da pesquisadora */
+.pesquisadora-perfil-hero{margin-top:22px}
+.pesquisadora-perfil-escrita{align-items:stretch}
+.pesquisadora-perfil-escrita .perfil-escrita-card{min-height:170px}
+.pesquisadora-perfil-escrita .read{font-size:16px;line-height:1.65;white-space:pre-wrap}
+@media(min-width:821px){
+ .pesquisadora-perfil-escrita{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
