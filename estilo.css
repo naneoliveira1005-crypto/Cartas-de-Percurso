@@ -349,3 +349,9 @@
   font-style:normal;
   font-weight:600;
 }
+
+/* Ajuste específico do enquadramento da foto da pesquisadora */
+.perfil-pesquisadora-publico .perfil-foto img{
+  object-fit:cover;
+  object-position:42% 28%;
+}
