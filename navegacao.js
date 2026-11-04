@@ -40,13 +40,45 @@ function montarAberturaPorEscrito(){
  wrap.append(titulo,h,p1,p2,p3,ep,fonte,p4,ass,assinatura,prox,fim);return wrap;
 }
 
-function montarPerfilPesquisadora(){
+function montarPerfilPesquisadora(editavel=false,chaveAdmin=''){
  const wrap=document.createElement('section');wrap.className='perfil-pesquisadora-publico';
  const hero=document.createElement('section');hero.className='perfil-hero';
  const foto=document.createElement('div');foto.className='perfil-foto';
- const img=document.createElement('img');img.alt='Foto de Nanny Oliveira';img.src='https://avatars.githubusercontent.com/u/340365526?v=4';img.onerror=()=>{img.hidden=true;iniciais.hidden=false;};img.onload=()=>{img.hidden=false;iniciais.hidden=true;};
+ const img=document.createElement('img');img.alt='Foto de Nanny Oliveira';img.hidden=true;
  const iniciais=document.createElement('div');iniciais.className='perfil-iniciais';iniciais.textContent='NO';
+ const nota=document.createElement('p');nota.className='muted';nota.textContent=editavel?'Você pode enviar ou trocar sua foto aqui.':'';
  foto.append(img,iniciais);
+ const FOTO_PESQ='https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/pesquisadora-foto';
+
+ async function carregarFoto(){
+   try{
+     const r=await fetch(FOTO_PESQ,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+     const x=await r.json();
+     if(r.ok&&x.url){img.src=x.url;img.hidden=false;iniciais.hidden=true;}
+     else{img.hidden=true;iniciais.hidden=false;}
+   }catch{img.hidden=true;iniciais.hidden=false;}
+ }
+ carregarFoto();
+
+ if(editavel){
+   const file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,image/webp';file.hidden=true;
+   const btnFoto=document.createElement('button');btnFoto.type='button';btnFoto.className='secondary';btnFoto.textContent='Escolher foto';
+   btnFoto.onclick=()=>file.click();
+   file.onchange=async()=>{
+     const arq=file.files?.[0];if(!arq)return;
+     btnFoto.disabled=true;nota.textContent='Enviando foto…';
+     try{
+       const fd=new FormData();fd.append('chave',chaveAdmin);fd.append('file',arq);
+       const r=await fetch(FOTO_PESQ,{method:'POST',body:fd});const x=await r.json();
+       if(!r.ok)throw Error(x?.error||'Falha');
+       if(x.url){img.src=x.url;img.hidden=false;iniciais.hidden=true;}
+       btnFoto.textContent='Trocar foto';nota.textContent='Foto salva no seu perfil.';
+     }catch{nota.textContent='Não foi possível enviar a foto agora.';}
+     finally{btnFoto.disabled=false;}
+   };
+   foto.append(file,btnFoto,nota);
+ }
+
  const intro=document.createElement('div');intro.className='perfil-apresentacao';
  const olho=document.createElement('span');olho.className='eyebrow';olho.textContent='UM POUCO SOBRE MIM';
  const h=document.createElement('h2');h.textContent='Nanny Oliveira';
@@ -59,6 +91,7 @@ function montarPerfilPesquisadora(){
  );
  wrap.append(hero,texto);return wrap;
 }
+
 function montarPortasPerfis(abrirPesquisadora,abrirNos){
  const duo=document.createElement('section');duo.className='duo-percurso portas-perfis';
  const mim=document.createElement('article');mim.className='card porta-perfil';
