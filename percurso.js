@@ -155,6 +155,20 @@ function mostrarRespostasRecebidas(container,registroId=null){
 }
 let encontroAtual='inicio';
 function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,navegar:id=>{if(!leave())return;if(id==='inicio')home();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
+
+function blocoPesquisadora(){
+ const sec=el('section',undefined,'pesquisadora-card');
+ const foto=el('div','NO','pesquisadora-foto-placeholder');
+ const txt=el('div',undefined,'pesquisadora-texto');
+ add(txt,
+   el('span','A PESQUISADORA','eyebrow'),
+   el('h3','Nani Oliveira'),
+   el('p','Pesquisadora responsável pelo percurso Por Escrito e pela investigação sobre a constituição profissional da coordenação pedagógica em Barrocas.','muted')
+ );
+ add(sec,foto,txt);
+ return sec;
+}
+
 function home(){dirty=false;encontroAtual='inicio';montarParticipante();
 if(data?.participante?.codigo?.startsWith('OBS')){
  add(app,
@@ -162,6 +176,7 @@ if(data?.participante?.codigo?.startsWith('OBS')){
    el('p','Olá, '+data.participante.nome+'. Você está no painel espelho da pesquisa, com a mesma organização geral do painel da pesquisadora e permissões exclusivamente de leitura.','notice'),
    el('p','Você pode acompanhar a estrutura dos encontros, as atividades planejadas, o estado de liberação e os materiais cadastrados. Não é possível editar, liberar, responder, cadastrar pessoas ou acessar produções individuais.','muted')
  );
+ app.append(blocoPesquisadora());
  const resumo=el('section',undefined,'card');
  add(resumo,el('h3','Visão geral do percurso'));
  const total=data?.resumo?.participantes_ativas;
@@ -176,7 +191,7 @@ if(data?.participante?.codigo?.startsWith('OBS')){
  app.append(resumo);
  app.append(el('p','Os números acima mostram apenas a movimentação geral do percurso. Nenhum conteúdo individual é disponibilizado.','muted'));
  return;
-}add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));const list=el('div',undefined,'encounter-list');for(const m of data.modulos)list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
+}add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));app.append(blocoPesquisadora());const list=el('div',undefined,'encounter-list');for(const m of data.modulos)list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
 function materiaisLiberadosE2(){
  if(encontroAtual!=='e2'||!Array.isArray(data?.materiais))return;
  if(document.getElementById('materiais-e2'))return;
