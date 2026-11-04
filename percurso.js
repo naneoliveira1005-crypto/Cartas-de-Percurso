@@ -48,12 +48,12 @@ function mostrarRespostasRecebidas(container,registroId=null){
  }).catch(()=>{if(sec.isConnected)info.textContent='Não foi possível consultar as respostas agora. Tente novamente mais tarde.';});
 }
 let encontroAtual='inicio';
-function montarParticipante(){app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,navegar:id=>{if(!leave())return;if(id==='inicio')home();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
+function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,navegar:id=>{if(!leave())return;if(id==='inicio')home();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
 function home(){dirty=false;encontroAtual='inicio';montarParticipante();
 if(data?.participante?.codigo?.startsWith('OBS')){
  add(app,
    el('h2','Painel de observação · Por Escrito'),
-   el('p','Olá, '+data.participante.nome+'. Este acesso espelha a organização do percurso da pesquisa em modo somente leitura.','notice'),
+   el('p','Olá, '+data.participante.nome+'. Você está no painel espelho da pesquisa, com a mesma organização geral do painel da pesquisadora e permissões exclusivamente de leitura.','notice'),
    el('p','Você pode acompanhar a estrutura dos encontros, as atividades planejadas, o estado de liberação e os materiais cadastrados. Não é possível editar, liberar, responder, cadastrar pessoas ou acessar produções individuais.','muted')
  );
  const resumo=el('section',undefined,'card');
@@ -63,7 +63,7 @@ if(data?.participante?.codigo?.startsWith('OBS')){
  for(const m of data.modulos){
    const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0);
    const p=el('p');
-   const abrir=btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>abrirVisaoConvidada(m));
+   const abrir=btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>{abaObservadora='sobre';abrirVisaoConvidada(m);});
    p.append(abrir,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s) produzidos','muted'));
    resumo.append(p);
  }
@@ -84,44 +84,49 @@ function materiaisLiberadosE2(){
 const editorAnterior=editor,verAnterior=viewRecord,abrirAnterior=openModule;
 editor=function(m,r,complemento){encontroAtual=m.id;montarParticipante();editorAnterior(m,r,complemento);if(m.id==='livre'&&!complemento){const h=app.querySelector('h2');if(h){h.textContent='Entre encontros';h.after(el('p','Entre um encontro e outro, este espaço permanece aberto para você compartilhar, se desejar, situações vividas na coordenação, dúvidas, reflexões ou mensagens à pesquisadora. Seus registros e as respostas recebidas ficam disponíveis para retomada no seu percurso. A participação é opcional: este espaço não é uma atividade obrigatória e não substitui as propostas de cada encontro.','notice'));}}const blocks=[...app.querySelectorAll('section.block')];blocks.forEach((b,i)=>{const title=b.querySelector('.eyebrow');const d=el('details',undefined,'question');d.open=i===0;d.append(el('summary',(i+1)+'  '+(title?.textContent||'Registro')));if(title)title.remove();while(b.firstChild)d.append(b.firstChild);b.replaceWith(d);});if(m.id==='e2')materiaisLiberadosE2();};
 viewRecord=function(r){encontroAtual=r.modulo;montarParticipante();verAnterior(r);if(r.modulo==='e2')materiaisLiberadosE2();if(r.modulo==='livre'){const h=app.querySelector('h2');if(h)h.textContent='Entre encontros';if(r.status==='enviado')mostrarRespostasRecebidas(app,r.id);}};
+let abaObservadora='sobre';
 function abrirVisaoConvidada(m){
  encontroAtual=m.id;montarParticipante();
  add(app,
-   btn('← Visão geral',home,true),
    el('p',m.id==='livre'?'Escuta / Entre encontros':'Encontros / '+m.id.toUpperCase(),'muted'),
    el('h2',m.id==='livre'?'Entre encontros':m.titulo),
-   el('p',(m.liberado?'Disponível para as participantes':'Ainda não liberado para as participantes')+' · visualização somente leitura','muted')
+   el('p',(m.liberado?'Disponível para as participantes':'Ainda não liberado para as participantes')+' · painel espelho · somente leitura','muted')
  );
+ const tabs=el('div',undefined,'tabs');
+ const itens=[['sobre',m.id==='livre'?'Sobre o espaço':'Sobre o encontro'],['atividade','Atividade individual'],['indicadores','Registros gerais'],['materiais','Materiais']];
+ for(const [id,label] of itens){
+   const b=btn(label,()=>{abaObservadora=id;abrirVisaoConvidada(m);});
+   if(id===abaObservadora)b.classList.add('active');
+   tabs.append(b);
+ }
+ app.append(tabs);
  const c=m.conteudo||{};
- if(c.subtitulo)app.append(el('h3',c.subtitulo));
- for(const p of c.introducao||[])app.append(el('p',p));
- if(c.importante){
-   const note=el('aside',undefined,'notice');
-   for(const p of c.importante)note.append(el('p',p));
-   app.append(note);
+ if(abaObservadora==='sobre'){
+   if(c.subtitulo)app.append(el('h3',c.subtitulo));
+   for(const p of c.introducao||[])app.append(el('p',p));
+   if(c.importante){const note=el('aside',undefined,'notice');for(const p of c.importante)note.append(el('p',p));app.append(note);}
+   app.append(el('p','Este perfil acompanha a organização metodológica do percurso, sem acesso a produções individuais ou comandos de gestão.','notice'));
+   return;
  }
- const qs=c.questoes||[];
- if(qs.length){
-   app.append(el('h3','Atividade individual prevista'));
-   qs.forEach((q,i)=>{
-     const d=el('details',undefined,'question');d.open=i===0;
-     d.append(el('summary',(i+1)+'  '+(q.titulo||'Questão')));
-     d.append(el('p',q.pergunta||'','read'));
-     const campo=el('textarea');campo.readOnly=true;campo.placeholder='Campo de escrita da participante — indisponível neste perfil de observação.';
-     d.append(campo);app.append(d);
-   });
- }else{
-   app.append(el('p','O conteúdo detalhado deste espaço ainda não foi configurado.','empty'));
+ if(abaObservadora==='atividade'){
+   add(app,el('h3',m.id==='e2'?'Folha de Percurso':c.subtitulo||'Atividade individual'),el('p','Visualização da proposta de escrita. Os campos estão desativados neste perfil.','muted'));
+   const qs=c.questoes||[];
+   if(!qs.length){app.append(el('p','O conteúdo detalhado deste espaço ainda não foi configurado.','empty'));return;}
+   qs.forEach((q,i)=>{const d=el('details',undefined,'question');d.open=i===0;d.append(el('summary',(i+1)+'  '+(q.titulo||'Questão')),el('p',q.pergunta||'','read'));const campo=el('textarea');campo.readOnly=true;campo.disabled=true;campo.placeholder='Campo de escrita da participante — indisponível no perfil de observação.';d.append(campo);app.append(d);});
+   app.append(el('p','Somente visualização: nenhuma resposta pode ser criada, alterada ou enviada.','notice'));
+   return;
  }
- const mats=data.materiais.filter(x=>x.modulo===m.id&&/^https:\/\//i.test(x.url));
- if(mats.length){
-   app.append(el('h3','Materiais cadastrados'));
-   for(const x of mats){
-     const p=el('p'),a=el('a',x.titulo+(x.liberado?'':' · ainda oculto para as participantes'));
-     a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);app.append(p);
-   }
- }else app.append(el('p','Ainda não há materiais cadastrados neste espaço.','muted'));
- app.append(el('p','Este perfil não oferece comandos de edição, liberação, resposta ou acesso a registros individuais.','notice'));
+ if(abaObservadora==='indicadores'){
+   const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0);
+   add(app,el('h3','Movimentação geral'),el('p',n+' registro(s) produzidos neste espaço.','read'),el('p','A observadora vê apenas a contagem geral. Nomes, textos, rascunhos, cartas e respostas individuais permanecem protegidos.','notice'));
+   return;
+ }
+ if(abaObservadora==='materiais'){
+   const mats=data.materiais.filter(x=>x.modulo===m.id&&/^https:\/\//i.test(x.url));
+   if(!mats.length){app.append(el('p','Ainda não há materiais cadastrados neste espaço.','empty'));return;}
+   for(const x of mats){const p=el('p'),a=el('a',x.titulo+(x.liberado?'':' · ainda oculto para as participantes'));a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);app.append(p);}
+   app.append(el('p','Os materiais podem ser abertos para consulta, mas este perfil não altera sua visibilidade nem seu conteúdo.','notice'));
+ }
 }
 openModule=function(m){if(data?.participante?.codigo?.startsWith('OBS')){abrirVisaoConvidada(m);return;}encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
 /* A capa é a primeira tela para todas as participantes.
