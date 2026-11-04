@@ -34,8 +34,10 @@ function montarAberturaPorEscrito(){
   'Quando este percurso chegar ao fim, gostaria que cada uma pudesse voltar ao que escreveu e reconhecer não apenas o que fez, mas também o que foi aprendendo e quem foi se tornando enquanto fazia.'
  ];
  wrap.append(titulo,h);
- for(const texto of paragrafos){const p=document.createElement('p');p.className='abertura-paragrafo';p.textContent=texto;wrap.append(p);}
- const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';wrap.append(fonte);
+ for(let i=0;i<paragrafos.length;i++){
+   const p=document.createElement('p');p.className='abertura-paragrafo';p.textContent=paragrafos[i];wrap.append(p);
+   if(i===2){const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';wrap.append(fonte);}
+ }
  const final=document.createElement('p');final.className='abertura-paragrafo';final.innerHTML='Bem-vinda ao seu <strong>Por Escrito</strong>.';wrap.append(final);
  const despedida=document.createElement('p');despedida.className='despedida-nanny';despedida.innerHTML='Um abraço carinhoso,<br><strong>Nanny Oliveira</strong>';wrap.append(despedida);
  return wrap;
