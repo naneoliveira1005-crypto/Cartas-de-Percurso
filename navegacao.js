@@ -26,7 +26,7 @@ function montarAberturaPorEscrito(){
  const p3=document.createElement('p');p3.className='abertura-paragrafo';p3.textContent='Há acontecimentos que passam por nós sem deixar marcas e há outros que permanecem, nos inquietam, nos deslocam e passam a fazer parte da maneira como pensamos e agimos. É nesse sentido que a experiência ganha força neste percurso:';
  const ep=document.createElement('blockquote');ep.className='epigrafe citacao-site';ep.textContent='“A experiência é o que nos passa, o que nos acontece, o que nos toca.”';
  const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';
- const p4=document.createElement('p');p4.className='abertura-paragrafo';p4.textContent='É também por isso que escrever importa. A escrita nos permite demorar um pouco mais sobre o vivido, perceber relações que no ritmo do cotidiano podem escapar e encontrar palavras para aquilo que ainda está em elaboração.';
+ const p4=document.createElement('p');p4.className='abertura-paragrafo';p4.textContent='É também por isso que escrever importa. A escrita ajuda a retomar o vivido, perceber aspectos que o ritmo do cotidiano pode deixar passar e compreender melhor aquilo que ainda está em elaboração.';
  const ass=document.createElement('blockquote');ass.className='assinatura-percurso citacao-site';ass.textContent='“Há percursos que só conseguimos compreender quando encontramos um lugar para escrevê-los.”';
  const assinatura=document.createElement('p');assinatura.className='autor-citacao';assinatura.textContent='Nanny Oliveira';
  const prox=document.createElement('div');prox.className='daqui-em-diante';
