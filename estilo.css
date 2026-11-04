@@ -369,3 +369,32 @@
   width:210px !important;
   height:210px !important;
 }
+
+/* Leitura dos textos corridos */
+.abertura-paragrafo,
+.encerramento-abertura p,
+.texto-nanny p,
+.perfil-lead,
+.read,
+.notice p,
+.card > p:not(.muted):not(.status):not(.error):not(.notice),
+.block > p:not(.muted):not(.status):not(.error){
+  text-align:justify;
+  text-justify:inter-word;
+  hyphens:auto;
+}
+
+/* Elementos que devem continuar com alinhamento natural */
+.epigrafe,
+.assinatura-percurso,
+.autor-citacao,
+.despedida-nanny,
+.eyebrow,
+.muted,
+.status,
+.error,
+button,
+label,
+h1,h2,h3,h4{
+  text-align:initial;
+}
