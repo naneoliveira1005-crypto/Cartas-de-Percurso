@@ -338,3 +338,14 @@
     font-size:15px !important;
   }
 }
+
+.despedida-nanny{
+  margin-top:1.5rem !important;
+  text-align:right;
+  font:italic 17px/1.6 Georgia,serif;
+  color:var(--green);
+}
+.despedida-nanny strong{
+  font-style:normal;
+  font-weight:600;
+}
