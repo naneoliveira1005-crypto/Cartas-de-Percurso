@@ -113,15 +113,42 @@ function render(){
     add(box,el('h3','Perfis das participantes'),el('p',completos+' de '+perfis.length+' participantes já acrescentaram informações pessoais.','notice'));
     const sel=select([['','Escolha uma participante'],...perfis.map(p=>[p.participante_id,p.codigo+' — '+p.nome])]);
     const detalhe=el('div');box.append(sel,detalhe);
-    sel.onchange=()=>{
+    sel.onchange=async()=>{
       detalhe.replaceChildren();const p=perfis.find(x=>x.participante_id===sel.value);if(!p)return;
       const d=p.dados||{},x=p.complementos||{};
-      add(detalhe,el('h3',p.nome),el('p',(d.funcao||'')+(d.onde?' · '+d.onde:''),'read'));
+
+      const hero=el('section',undefined,'perfil-hero pesquisadora-perfil-hero');
+      const foto=el('div',undefined,'perfil-foto');
+      const img=el('img');img.alt='Foto de '+p.nome;img.hidden=true;
+      const iniciais=el('div',(p.nome||'').split(/\s+/).slice(0,2).map(v=>v[0]).join('').toUpperCase(),'perfil-iniciais');
+      add(foto,img,iniciais,el('p',p.foto_path?'Foto enviada pela participante.':'A participante ainda não enviou uma foto.','muted'));
+      const intro=el('div',undefined,'perfil-apresentacao');
+      add(intro,el('span',p.codigo,'eyebrow'),el('h2',p.nome),el('p',(d.funcao||'')+(d.onde?' · '+d.onde:''),'perfil-lead'));
+      add(hero,foto,intro);detalhe.append(hero);
+
+      if(p.foto_path){
+        try{
+          const rr=await fetch('https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/perfil-foto-admin',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({chave,participante_id:p.participante_id})
+          });
+          const fx=await rr.json();
+          if(rr.ok&&fx.url){img.src=fx.url;img.hidden=false;iniciais.hidden=true;}
+        }catch{}
+      }
+
       const grid=el('div',undefined,'perfil-dados-grid');
       const card=(t,v)=>{const a=el('article',undefined,'perfil-dado-card');add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não informado','read'));return a;};
       grid.append(card('ETAPAS',d.etapas),card('TEMPO NA FUNÇÃO',d.tempo_funcao),card('VÍNCULO',d.vinculo),card('TEMPO NA REDE',d.tempo_rede));detalhe.append(grid);
+
       const textos=[['COMO CHEGUEI ATÉ AQUI',x.chegada],['O QUE ME FORMOU',x.experiencias],['UMA REALIZAÇÃO QUE LEVO COMIGO',x.realizacao],['UM POUCO DE MIM',x.sobre_mim]];
-      for(const [t,v] of textos){const a=el('section',undefined,'block');add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não preenchido.','read'));detalhe.append(a);}
+      const escrita=el('div',undefined,'perfil-escrita-grid pesquisadora-perfil-escrita');
+      for(const [t,v] of textos){
+        const a=el('article',undefined,'perfil-escrita-card');
+        add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não preenchido.','read'));
+        escrita.append(a);
+      }
+      detalhe.append(escrita);
     };
    }).catch(()=>box.replaceChildren(el('p','Não foi possível carregar os perfis agora.','error')));
   return;
