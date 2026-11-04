@@ -142,6 +142,7 @@ function painelNovidades(){
        el('p',(n.origem||n.modulo||'Percurso')+' · '+date(n.ocorrido_em),'muted')
      );
      const abrir=btn('Abrir',()=>{
+       veioDeNovidade=true;
        if(n.tipo==='orientacao'){encontroAtual='orientacao';render();return;}
        if(n.tipo==='perfil'){perfilPendente=n.participante_id;encontroAtual='perfil';render();return;}
        registroPendente=n.participante_id||null;encontroAtual=n.modulo||'inicio';abaAtual='registros';render();
@@ -151,10 +152,11 @@ function painelNovidades(){
  }).catch(()=>corpo.replaceChildren(el('p','Não foi possível consultar as novidades agora.','error')));
 }
 
-let encontroAtual='e2',abaAtual='atividade',registroPendente=null,perfilPendente=null;
+let encontroAtual='e2',abaAtual='atividade',registroPendente=null,perfilPendente=null,veioDeNovidade=false;
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
- app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ if(veioDeNovidade&&encontroAtual!=='inicio'){const voltar=btn('← Voltar ao início',()=>{veioDeNovidade=false;encontroAtual='inicio';abaAtual='atividade';render();});voltar.classList.add('secondary');const linha=el('div',undefined,'toolbar voltar-notificacao');linha.append(voltar);app.append(linha);}
  if(encontroAtual==='sobre_pesquisadora'){app.append(montarPerfilPesquisadora(true,chave));return;}
  if(encontroAtual==='orientacao'){painelOrientacao();return;}
  if(encontroAtual==='acessos'){painelAcessos();return;}
