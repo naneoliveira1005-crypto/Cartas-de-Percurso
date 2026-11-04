@@ -46,10 +46,9 @@ function montarPerfilPesquisadora(editavel=false,chaveAdmin=''){
  const foto=document.createElement('div');foto.className='perfil-foto';
  const img=document.createElement('img');img.alt='Foto de Nanny Oliveira';img.hidden=true;
  const iniciais=document.createElement('div');iniciais.className='perfil-iniciais';iniciais.textContent='NO';
- const nota=document.createElement('p');nota.className='muted';nota.textContent=editavel?'Você pode enviar ou trocar sua foto aqui.':'';
  foto.append(img,iniciais);
- const FOTO_PESQ='https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/pesquisadora-foto';
 
+ const FOTO_PESQ='https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/pesquisadora-foto';
  async function carregarFoto(){
    try{
      const r=await fetch(FOTO_PESQ,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
@@ -60,9 +59,17 @@ function montarPerfilPesquisadora(editavel=false,chaveAdmin=''){
  }
  carregarFoto();
 
+ const intro=document.createElement('div');intro.className='perfil-apresentacao';
+ const olho=document.createElement('span');olho.className='eyebrow';olho.textContent='UM POUCO SOBRE MIM';
+ const h=document.createElement('h2');h.textContent='Nanny Oliveira';
+ const p=document.createElement('p');p.className='perfil-lead';p.textContent='Antes de ser a pesquisadora deste percurso, sou professora. É desse lugar — atravessado pela sala de aula, pela formação de professores, pela coordenação de processos formativos e pelas muitas perguntas que a educação continua me fazendo — que chego a esta pesquisa.';
+ intro.append(olho,h,p);
+
  if(editavel){
+   const upload=document.createElement('div');upload.className='pesquisadora-upload';
    const file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,image/webp';file.hidden=true;
    const btnFoto=document.createElement('button');btnFoto.type='button';btnFoto.className='secondary';btnFoto.textContent='Escolher foto';
+   const nota=document.createElement('span');nota.className='muted';nota.textContent='JPG, PNG ou WEBP · até 5 MB';
    btnFoto.onclick=()=>file.click();
    file.onchange=async()=>{
      const arq=file.files?.[0];if(!arq)return;
@@ -76,14 +83,10 @@ function montarPerfilPesquisadora(editavel=false,chaveAdmin=''){
      }catch{nota.textContent='Não foi possível enviar a foto agora.';}
      finally{btnFoto.disabled=false;}
    };
-   foto.append(file,btnFoto,nota);
+   upload.append(btnFoto,file,nota);intro.append(upload);
  }
 
- const intro=document.createElement('div');intro.className='perfil-apresentacao';
- const olho=document.createElement('span');olho.className='eyebrow';olho.textContent='UM POUCO SOBRE MIM';
- const h=document.createElement('h2');h.textContent='Nanny Oliveira';
- const p=document.createElement('p');p.className='perfil-lead';p.textContent='Antes de ser a pesquisadora deste percurso, sou professora. É desse lugar — atravessado pela sala de aula, pela formação de professores, pela coordenação de processos formativos e pelas muitas perguntas que a educação continua me fazendo — que chego a esta pesquisa.';
- intro.append(olho,h,p);hero.append(foto,intro);
+ hero.append(foto,intro);
  const texto=document.createElement('section');texto.className='card texto-nanny';
  texto.append(
    Object.assign(document.createElement('p'),{textContent:'Minha relação com Barrocas começou antes da pesquisa, em experiências de formação e acompanhamento da rede. Retornar agora como pesquisadora exige de mim outro movimento: escutar sem antecipar respostas, reconhecer o que já conheço e, ao mesmo tempo, permitir que o campo desfaça certezas e produza novas perguntas.'}),
