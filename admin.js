@@ -38,18 +38,31 @@ function previewModule(m){
  app.append(btn('← Voltar ao meu painel',render));
 }
 async function painelAcessos(){
- add(app,el('h2','Acessos individuais'),el('p','Aqui estão as coordenadoras e as contas de teste Lumina e Nanny. Todos os links já permitem entrar sem digitar senha. Nenhuma chave anterior foi alterada.','muted'));
+ add(app,el('h2','Acessos individuais'),el('p','Aqui estão as coordenadoras, as contas de teste e, em seção separada, as observadoras convidadas. As observadoras não integram o corpus nem a contagem das participantes.','muted'));
  const sec=el('section',undefined,'card'),sorted=[...data.participantes].sort((a,b)=>(a.codigo?.startsWith('TESTE-')&&!b.codigo?.startsWith('TESTE-')?-1:!a.codigo?.startsWith('TESTE-')&&b.codigo?.startsWith('TESTE-')?1:a.nome.localeCompare(b.nome,'pt-BR'))),person=select([['','Escolha uma pessoa'],...sorted.map(p=>[p.id,p.codigo?.startsWith('TESTE-')?p.nome+' — Conta de teste':p.codigo+' — '+p.nome])]),detail=el('div'),status=el('p','Selecione uma pessoa para consultar seu link.','muted');
  person.setAttribute('aria-label','Coordenadora para acesso individual');
  add(sec,el('h3','Copiar um acesso por vez'),person,status,detail);
  app.append(sec);
  const obs=el('section',undefined,'card');
  add(obs,el('h3','Observadoras convidadas · painel espelho'),
- el('p','OBS01 — Verônica Domingues Almeida · cadastro de acesso não localizado; ativação pendente.'),
- el('p','OBS02 — Priscila Maria Possidonio de Oliveira · cadastro de acesso não localizado; ativação pendente.'),
- el('p','Permissões previstas: ver módulos, atividades, materiais, estado de liberação e contagens gerais; somente leitura. Sem acesso a nomes ou registros individuais, sem alterações, respostas ou liberação de materiais.','muted'),
- el('p','Esta seção registra a situação verificada. Não constitui um convite ativo e não exibe credenciais.','muted'));
+ el('p','Carregando situação dos acessos…','muted'));
  app.append(obs);
+ try{
+  const ro=await fetch(API+'percurso_observadores_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
+  if(!ro.ok)throw Error('Falha');
+  const observadoras=await ro.json();
+  obs.replaceChildren(el('h3','Observadoras convidadas · painel espelho'));
+  for(const o of observadoras){
+   const estado=o.ativo?'ATIVO':'INATIVO';
+   const acesso=o.primeiro_acesso_em?' · já acessou':' · ainda não acessou';
+   add(obs,el('p',o.codigo+' — '+o.nome+' · '+(o.email||'sem e-mail')+' · '+estado+acesso));
+  }
+  add(obs,
+   el('p','Permissões: mesma organização geral do painel da pesquisadora, em modo somente leitura. Podem abrir módulos, atividades, materiais e ver contagens gerais. Não veem nomes, registros individuais, cartas pessoais, chaves ou links de participantes e não podem editar, responder, liberar, cadastrar ou exportar.','muted'),
+   el('p','As credenciais pessoais das observadoras não são exibidas neste painel.','muted'));
+ }catch(e){
+  obs.replaceChildren(el('h3','Observadoras convidadas · painel espelho'),el('p','Não foi possível consultar a situação dos acessos agora.','error'));
+ }
  let links=[];
  try{
   const r=await fetch(API+'percurso_links_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
@@ -84,12 +97,12 @@ async function enviarRespostaPesquisadora(registro,texto){
 let encontroAtual='e2',abaAtual='atividade';
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
- app=montarPainel({modulos:data.modulos.filter(m=>/^e\d$/.test(m.id)||m.id==='livre'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':'atividade';render();},sair:sairPainel});
+ app=montarPainel({modulos:data.modulos.filter(m=>/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':'atividade';render();},sair:sairPainel});
  if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
  if(encontroAtual==='inicio'){add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id)||x.id==='livre')){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
  const m=data.modulos.find(x=>x.id===encontroAtual);if(!m)return;
- add(app,el('p',m.id==='livre'?'Escuta / Entre encontros':'Encontros / '+m.id.toUpperCase(),'muted'),el('h2',m.id==='livre'?'Entre encontros':m.titulo),el('p',m.id==='livre'?'Espaço opcional de comunicação e acompanhamento':m.data_encontro?new Date(m.data_encontro+'T12:00:00').toLocaleDateString('pt-BR')+' · 13h30 às 17h':'Data a definir','muted'));
+ add(app,el('p',m.id==='livre'?'Escuta / Entre encontros':m.id==='carta'?'Escrita individual protegida':'Encontros / '+m.id.toUpperCase(),'muted'),el('h2',m.id==='livre'?'Entre encontros':m.titulo),el('p',m.id==='livre'?'Espaço opcional de comunicação e acompanhamento':m.data_encontro?new Date(m.data_encontro+'T12:00:00').toLocaleDateString('pt-BR')+' · 13h30 às 17h':'Data a definir','muted'));
  if(m.id==='livre')app.append(el('p','Este canal complementar permite que a coordenadora escreva à pesquisadora entre os encontros. É opcional e não constitui uma nova atividade obrigatória nem um encontro adicional. Mensagens e devolutivas permanecem disponíveis no percurso individual e podem ajudar a acompanhar as intervenções da pesquisadora, nos limites do consentimento.','notice'));
  const tabs=el('div',undefined,'tabs');for(const [id,label] of [['sobre',m.id==='livre'?'Sobre o espaço':'Sobre o encontro'],['atividade',m.id==='livre'?'Campo de escrita':'Atividade individual'],['registros',m.id==='livre'?'Mensagens e respostas':'Registros'],['materiais','Materiais']]){const b=btn(label,()=>{abaAtual=id;render();});if(id===abaAtual)b.classList.add('active');tabs.append(b);}app.append(tabs);
  if(abaAtual==='sobre'){add(app,el('h3',m.id==='livre'?'Entre encontros':m.id==='e2'?'Tornar-se coordenadora pedagógica':m.titulo),el('p',m.id==='livre'?(m.liberado?'Este espaço opcional está disponível às coordenadoras.':'Este espaço está indisponível para as coordenadoras.'):m.liberado?'Este encontro está disponível para as participantes.':'Este encontro ainda não foi liberado para as participantes.'));for(const p of m.conteudo?.introducao||[])app.append(el('p',p));return;}
