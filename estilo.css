@@ -279,3 +279,62 @@
   .nav-profile-pair .nav-item span{display:block}
   .nav-profile-pair .nav-item strong{font-size:16px}
 }
+
+/* Correção firme do menu lado a lado e upload da pesquisadora */
+.sidebar .nav-profile-pair{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  width:100%;
+}
+.sidebar .nav-profile-pair > .nav-item{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  gap:6px !important;
+  padding:18px 12px !important;
+  border-left:0 !important;
+  border-bottom:1px solid #ffffff24 !important;
+}
+.sidebar .nav-profile-pair > .nav-item:first-child{
+  border-right:1px solid #ffffff24 !important;
+}
+.sidebar .nav-profile-pair > .nav-item strong{
+  font-size:18px !important;
+  line-height:1.12 !important;
+  min-width:0 !important;
+}
+.sidebar .nav-profile-pair > .nav-item span{
+  font-size:12px !important;
+  line-height:1.3 !important;
+}
+.sidebar .nav-profile-pair > .nav-item.active{
+  box-shadow:inset 0 -4px 0 var(--gold);
+  background:#ffffff13 !important;
+}
+.perfil-foto img[hidden], .perfil-iniciais[hidden]{
+  display:none !important;
+}
+.pesquisadora-upload{
+  margin-top:18px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.pesquisadora-upload .muted{
+  font-size:13px;
+}
+@media(max-width:800px){
+  .sidebar .nav-profile-pair{
+    min-width:280px;
+  }
+  .sidebar .nav-profile-pair > .nav-item{
+    padding:12px 10px !important;
+  }
+  .sidebar .nav-profile-pair > .nav-item strong{
+    font-size:15px !important;
+  }
+}
