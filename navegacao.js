@@ -30,7 +30,7 @@ function montarPerfilPesquisadora(){
  const wrap=document.createElement('section');wrap.className='perfil-pesquisadora-publico';
  const hero=document.createElement('section');hero.className='perfil-hero';
  const foto=document.createElement('div');foto.className='perfil-foto';
- const img=document.createElement('img');img.alt='Foto de Nanny Oliveira';img.src='foto-nanny-oliveira.jpg';img.onerror=()=>{img.hidden=true;iniciais.hidden=false;};img.onload=()=>{img.hidden=false;iniciais.hidden=true;};
+ const img=document.createElement('img');img.alt='Foto de Nanny Oliveira';img.src='https://avatars.githubusercontent.com/u/340365526?v=4';img.onerror=()=>{img.hidden=true;iniciais.hidden=false;};img.onload=()=>{img.hidden=false;iniciais.hidden=true;};
  const iniciais=document.createElement('div');iniciais.className='perfil-iniciais';iniciais.textContent='NO';
  foto.append(img,iniciais);
  const intro=document.createElement('div');intro.className='perfil-apresentacao';
@@ -45,4 +45,19 @@ function montarPerfilPesquisadora(){
  );
  wrap.append(hero,texto);return wrap;
 }
-window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;window.montarPerfilPesquisadora=montarPerfilPesquisadora;
+function montarPortasPerfis(abrirPesquisadora,abrirNos){
+ const duo=document.createElement('section');duo.className='duo-percurso portas-perfis';
+ const mim=document.createElement('article');mim.className='card porta-perfil';
+ const a=document.createElement('span');a.className='eyebrow';a.textContent='UM POUCO SOBRE MIM';
+ const h1=document.createElement('h3');h1.textContent='Nanny Oliveira';
+ const p1=document.createElement('p');p1.textContent='Conheça um pouco de quem pesquisa, escreve e também se coloca neste percurso.';
+ const b1=document.createElement('button');b1.textContent='Conhecer Nanny';b1.onclick=abrirPesquisadora;
+ mim.append(a,h1,p1,b1);
+ const nos=document.createElement('article');nos.className='card porta-perfil';
+ const b=document.createElement('span');b.className='eyebrow';b.textContent='MUITO SOBRE NÓS';
+ const h2=document.createElement('h3');h2.textContent='As coordenadoras que fazem este percurso';
+ const p2=document.createElement('p');p2.textContent='Um espaço para reconhecer e escrever as trajetórias de quem constrói esta pesquisa.';
+ const b2=document.createElement('button');b2.textContent='Abrir nosso percurso';b2.onclick=abrirNos;
+ nos.append(b,h2,p2,b2);duo.append(mim,nos);return duo;
+}
+window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;window.montarPerfilPesquisadora=montarPerfilPesquisadora;window.montarPortasPerfis=montarPortasPerfis;
