@@ -40,9 +40,12 @@ async function abrirPerfil(){
   const img=el('img');img.alt='Foto do perfil';img.hidden=true;
   const monograma=el('div',(perfil.nome||'').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'PE','perfil-iniciais');
   const file=el('input');file.type='file';file.accept='image/jpeg,image/png,image/webp';file.id='foto-perfil';file.hidden=true;
-  const fotoBtn=btn('Adicionar ou trocar foto',()=>file.click(),true);
+  const camera=el('input');camera.type='file';camera.accept='image/*';camera.setAttribute('capture','user');camera.id='camera-perfil';camera.hidden=true;
+  const fotoBtn=btn('Escolher foto',()=>file.click(),true);
+  const cameraBtn=btn('Tirar foto agora',()=>camera.click(),true);
+  const fotoAcoes=el('div',undefined,'perfil-foto-acoes');fotoAcoes.append(fotoBtn,cameraBtn);
   const fotoNota=el('p','Foto opcional · usada apenas para personalizar seu perfil neste ambiente.','muted');
-  add(foto,img,monograma,file,fotoBtn,fotoNota);
+  add(foto,img,monograma,file,camera,fotoAcoes,fotoNota);
 
   const intro=el('div',undefined,'perfil-apresentacao');
   add(intro,
@@ -62,17 +65,21 @@ async function abrirPerfil(){
   }
   carregarFoto();
 
-  file.onchange=async()=>{
-   const f=file.files?.[0];if(!f)return;
-   fotoBtn.disabled=true;fotoBtn.textContent='Enviando foto…';
+  async function enviarFoto(f){
+   if(!f)return;
+   fotoBtn.disabled=true;cameraBtn.disabled=true;fotoNota.textContent='Enviando foto…';
    try{
     const fd=new FormData();fd.append('token',token);fd.append('file',f);
     const rr=await fetch(FOTO_API,{method:'POST',body:fd});const x=await rr.json();
     if(!rr.ok)throw Error(x.error||'Falha');
-    img.src=x.url;img.hidden=false;monograma.hidden=true;fotoBtn.textContent='Trocar foto';
+    img.src=x.url;img.hidden=false;monograma.hidden=true;
+    fotoBtn.textContent='Trocar foto';fotoNota.textContent='Foto salva no seu perfil.';
+    fotoNota.classList.remove('error');
    }catch{fotoNota.textContent='Não foi possível enviar a foto agora. Tente novamente.';fotoNota.classList.add('error');}
-   finally{fotoBtn.disabled=false;}
-  };
+   finally{fotoBtn.disabled=false;cameraBtn.disabled=false;}
+  }
+  file.onchange=()=>enviarFoto(file.files?.[0]);
+  camera.onchange=()=>enviarFoto(camera.files?.[0]);
 
   const d=perfil.dados||{};
   const grade=el('section',undefined,'perfil-dados-grid');
