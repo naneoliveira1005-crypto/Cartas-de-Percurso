@@ -19,25 +19,26 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
 function chaveDoAcesso(valor){const text=valor.trim();try{const u=new URL(text);if(u.protocol==='https:'||u.protocol==='http:'){const h=new URLSearchParams(u.hash.slice(1));return (u.searchParams.get('token')||h.get('token')||h.get('chave')||'').trim();}}catch{}return text;}
 function montarAberturaPorEscrito(){
  const wrap=document.createElement('section');wrap.className='abertura-por-escrito abertura-texto';
- const titulo=document.createElement('span');titulo.className='eyebrow';titulo.textContent='POR ESCRITO — PERCURSOS DE UMA COORDENADORA';
- const h=document.createElement('h2');h.textContent='Um lugar para pensar a profissão a partir do que vivemos.';
- const p1=document.createElement('p');p1.className='abertura-paragrafo';p1.textContent='A coordenação pedagógica ocupa um lugar singular na escola. É trabalho de acompanhamento, formação, articulação e leitura do cotidiano pedagógico. Exige escuta atenta, repertório profissional, capacidade de fazer perguntas e disposição para rever caminhos. Nem tudo se resolve no momento em que acontece; muitas vezes, é quando voltamos a uma situação, narramos o que vivemos e interrogamos nossas escolhas que começamos a compreender melhor o trabalho.';
- const p2=document.createElement('p');p2.className='abertura-paragrafo';p2.textContent='O Por Escrito nasceu dentro desta pesquisa para acolher justamente esse movimento. Não é um lugar de respostas prontas nem uma coleção de tarefas. É um espaço para registrar, retomar e acompanhar o percurso de cada coordenadora; guardar perguntas que ainda permanecem; reconhecer saberes construídos no exercício da função; e perceber o que muda quando olhamos novamente para aquilo que vivemos.';
- const p3=document.createElement('p');p3.className='abertura-paragrafo';p3.textContent='Há acontecimentos que passam por nós sem deixar marcas e há outros que permanecem, nos inquietam, nos deslocam e passam a fazer parte da maneira como pensamos e agimos. É nesse sentido que a experiência ganha força neste percurso:';
- const ep=document.createElement('blockquote');ep.className='epigrafe citacao-site';ep.textContent='“A experiência é o que nos passa, o que nos acontece, o que nos toca.”';
- const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';
- const p4=document.createElement('p');p4.className='abertura-paragrafo';p4.textContent='É também por isso que escrever importa. A escrita ajuda a retomar o vivido, perceber aspectos que o ritmo do cotidiano pode deixar passar e compreender melhor aquilo que ainda está em elaboração.';
- const ass=document.createElement('blockquote');ass.className='assinatura-percurso citacao-site';ass.textContent='“Há percursos que só conseguimos compreender quando encontramos um lugar para escrevê-los.”';
- const assinatura=document.createElement('p');assinatura.className='autor-citacao';assinatura.textContent='Nanny Oliveira';
- const prox=document.createElement('div');prox.className='daqui-em-diante';
- const pp=document.createElement('p');pp.textContent='Ao longo do Por Escrito, você poderá conhecer um pouco de quem conduz a pesquisa, construir e revisitar o seu próprio perfil, acompanhar os Encontros de Partilha, acessar materiais, reler registros já produzidos e escrever entre um encontro e outro quando alguma questão precisar continuar sendo pensada.';
- prox.append(pp);
- const fim=document.createElement('div');fim.className='encerramento-abertura';
- const f1=document.createElement('p');f1.textContent='Quero que este seja um espaço de cuidado com o pensamento e com o trabalho que vocês realizam. Desde que começamos este percurso, tenho aprendido muito com o modo como vocês narram situações, formulam perguntas e dão sentido ao que fazem. O olhar de vocês amplia o meu, desloca minhas certezas e fortalece esta pesquisa.';
- const f2=document.createElement('p');f2.textContent='Espero que essa troca seja de mão dupla: que, enquanto aprendo com vocês, o Por Escrito também lhes devolva tempo, perguntas e ferramentas para olhar o próprio trabalho com mais nitidez. Que possamos construir este percurso juntas, com confiança, curiosidade e respeito pelo que cada experiência tem de singular.';
- const despedida=document.createElement('p');despedida.className='despedida-nanny';despedida.innerHTML='Um abraço carinhoso,<br><strong>Nanny Oliveira</strong>';
- fim.append(f1,f2,despedida);
- wrap.append(titulo,h,p1,p2,p3,ep,fonte,p4,ass,assinatura,prox,fim);return wrap;
+ const titulo=document.createElement('span');titulo.className='eyebrow';titulo.textContent='POR ESCRITO · PERCURSOS DE UMA COORDENADORA';
+ const h=document.createElement('h2');h.textContent='Um lugar para olhar de novo para o que vivemos.';
+ const paragrafos=[
+  'Existe uma pergunta que costuma chegar no fim do dia, quando as salas já estão vazias e a gente finalmente senta: aquele momento com a professora, hoje de manhã, foi o jeito certo?',
+  'Ninguém aprende a coordenar de fora. A gente aprende no meio do movimento: no corredor, entre uma reunião e outra, com o café esfriando enquanto alguém traz um problema que ainda não sabemos como resolver. Carregamos para essa função tudo o que fomos antes: professoras, alunas, colegas. E descobrimos, no dia a dia, que isso não basta para responder a tudo o que a coordenação pede. Vamos aprendendo no caminho.',
+  'E é justamente aí que está uma das questões que movimentam esta pesquisa: passamos por muitas situações, mas nem todas se tornam experiência. Larrosa, autor que acompanha este percurso, diz que a experiência é “o que nos passa, o que nos acontece, o que nos toca”. Há coisas que acontecem e se vão. Outras ficam. Voltam depois, insistem, provocam novas perguntas e mudam alguma coisa no nosso jeito de olhar para o trabalho.',
+  'Às vezes, o que faz diferença é conseguir parar um pouco e voltar ao que aconteceu: o que estava em jogo ali? O que me levou a agir daquele modo? O que percebo agora que talvez não tenha percebido naquele momento?',
+  'Foi para esse movimento que este espaço nasceu.',
+  'Aqui você poderá escrever sobre situações que ficaram, dúvidas que continuam, decisões que hoje talvez fossem tomadas de outro modo e aprendizagens que começaram no próprio exercício da função. Não existe uma forma certa de escrever e não há resposta esperada. O que me interessa é o seu trabalho como ele realmente acontece: com escolhas, dúvidas, acertos, tensões e questões que ainda permanecem.',
+  'Escrever aqui não é prestar contas. É ter a possibilidade de voltar ao vivido e olhar para ele outra vez. Você também poderá reler o que escreveu nos encontros, acompanhar o próprio percurso e falar comigo entre um encontro e outro quando alguma questão continuar pedindo atenção.',
+  'O Por Escrito faz parte da pesquisa que estamos construindo juntas. O que vocês registram aqui me ajuda a compreender melhor como as coordenadoras de Barrocas constroem seus saberes no exercício da função. E eu quero ler cada registro com o mesmo cuidado com que espero que vocês possam olhar para o próprio trabalho.',
+  'Eu também estou aprendendo nesse processo. Quanto mais vocês contam sobre o que vivem na coordenação, mais eu preciso rever perguntas, certezas e modos de olhar para esse trabalho. Estamos construindo conhecimento juntas, cada uma do seu lugar.',
+  'Quando este percurso chegar ao fim, gostaria que cada uma pudesse voltar ao que escreveu e reconhecer não apenas o que fez, mas também o que foi aprendendo e quem foi se tornando enquanto fazia.'
+ ];
+ wrap.append(titulo,h);
+ for(const texto of paragrafos){const p=document.createElement('p');p.className='abertura-paragrafo';p.textContent=texto;wrap.append(p);}
+ const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';wrap.append(fonte);
+ const final=document.createElement('p');final.className='abertura-paragrafo';final.innerHTML='Bem-vinda ao seu <strong>Por Escrito</strong>.';wrap.append(final);
+ const despedida=document.createElement('p');despedida.className='despedida-nanny';despedida.innerHTML='Um abraço carinhoso,<br><strong>Nanny Oliveira</strong>';wrap.append(despedida);
+ return wrap;
 }
 
 function montarPerfilPesquisadora(editavel=false,chaveAdmin=''){
