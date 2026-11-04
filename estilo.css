@@ -155,3 +155,19 @@
 .duo-percurso{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.8rem}
 .duo-percurso .card{height:100%;margin:0}
 @media(max-width:760px){.duo-percurso{grid-template-columns:1fr}.abertura-por-escrito{padding:1rem}}
+
+.abertura-texto{max-width:980px}
+.abertura-texto h2{font-size:clamp(34px,5vw,58px);line-height:1.08;margin:.45rem 0 1.35rem}
+.abertura-paragrafo{font-size:18px;line-height:1.78;max-width:900px;margin:0 0 1.05rem}
+.autor-citacao{margin:.25rem 0 1.35rem;color:var(--muted);font-size:14px;font-style:italic}
+.daqui-em-diante{margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--line)}
+.daqui-em-diante h3{font:normal 24px/1.2 Georgia,serif;color:var(--green);margin:0 0 .65rem}
+.daqui-em-diante p{font-size:16px;line-height:1.7;max-width:860px}
+.portas-perfis{margin:1.2rem 0 2.4rem}
+.porta-perfil{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:240px;padding:28px!important;border:1px solid var(--line)!important;border-radius:20px!important;background:#fffdf8!important}
+.porta-perfil h3{font:normal 28px/1.15 Georgia,serif;color:var(--green);margin:.45rem 0 .8rem}
+.porta-perfil p{font-size:16px;line-height:1.65;max-width:480px}
+.porta-perfil button{margin-top:1rem}
+.perfil-pesquisadora-publico .texto-nanny{font-size:17px;line-height:1.75}
+.perfil-pesquisadora-publico .texto-nanny p{max-width:850px}
+@media(max-width:760px){.abertura-paragrafo{font-size:16px}.porta-perfil{min-height:0}.portas-perfis{grid-template-columns:1fr}}
