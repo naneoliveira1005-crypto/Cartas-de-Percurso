@@ -14,12 +14,15 @@ async function enterResearcher(candidate){
  if(!r.ok)return false;const result=await r.json();if(!Array.isArray(result.participantes)||!Array.isArray(result.modulos))return false;
  sessionStorage.removeItem('percurso_chave');sessionStorage.setItem('percurso_admin',candidate);location.replace('organizador.html');return true;
 }
-function login(){app.replaceChildren();const box=el('section',undefined,'card login'),h=el('h2','Bem-vinda ao Por Escrito'),label=el('label','Acesso alternativo: cole seu link individual aqui'),input=el('input'),status=el('p','','status');input.id='chave';input.type='password';input.autocomplete='off';label.htmlFor='chave';const form=el('form');const enter=btn('Entrar',()=>{});enter.type='submit';form.onsubmit=async e=>{e.preventDefault();token=chaveDoAcesso(input.value);enter.disabled=true;status.textContent='Conectando…';try{data=await rpc('percurso_carregar',{p_token:token});sessionStorage.removeItem('percurso_admin');sessionStorage.setItem('percurso_chave',token);home();}catch(e){try{if(await enterResearcher(token))return;}catch{}status.textContent=message(e);}finally{enter.disabled=false;}};add(box,h,el('p','Você não precisa criar senha nem digitar códigos. Abra o e-mail da pesquisadora e clique em “ENTRAR NO MEU PERCURSO”.','notice'));add(form,label,input,el('p','Use este campo somente se o botão do e-mail não abrir. Cole o link inteiro recebido, sem compartilhar com outras pessoas.','muted'),enter,status);box.append(form);app.append(box);}
+function login(){app.replaceChildren();const box=el('section',undefined,'card login'),h=el('h2','Bem-vinda ao Por Escrito'),label=el('label','Acesso alternativo: cole seu link individual aqui'),input=el('input'),status=el('p','','status');input.id='chave';input.type='password';input.autocomplete='off';label.htmlFor='chave';const form=el('form');const enter=btn('Entrar',()=>{});enter.type='submit';form.onsubmit=async e=>{e.preventDefault();token=chaveDoAcesso(input.value);enter.disabled=true;status.textContent='Conectando…';try{data=await rpc('percurso_carregar',{p_token:token});if(data?.participante?.codigo?.startsWith('ORI')){const o=await rpc('percurso_orientadora',{p_token:token});data={participante:o.orientadora,modulos:o.modulos||[],materiais:o.materiais||[],registros:o.registros||[],cartas:o.cartas||[],participantes:o.participantes||[],perfis:o.perfis||[],orientacao:o.orientacao||[],resumo:o.resumo||{}};}sessionStorage.removeItem('percurso_admin');sessionStorage.setItem('percurso_chave',token);home();}catch(e){try{if(await enterResearcher(token))return;}catch{}status.textContent=message(e);}finally{enter.disabled=false;}};add(box,h,el('p','Você não precisa criar senha nem digitar códigos. Abra o e-mail da pesquisadora e clique em “ENTRAR NO MEU PERCURSO”.','notice'));add(form,label,input,el('p','Use este campo somente se o botão do e-mail não abrir. Cole o link inteiro recebido, sem compartilhar com outras pessoas.','muted'),enter,status);box.append(form);app.append(box);}
 async function refresh(){
  data=await rpc('percurso_carregar',{p_token:token});
  if(data?.participante?.codigo?.startsWith('OBS')){
    const o=await rpc('percurso_observador',{p_token:token});
    data={participante:o.observadora,modulos:o.modulos||[],materiais:o.materiais||[],registros:[],cartas:[],resumo:o.resumo||{}};
+ }else if(data?.participante?.codigo?.startsWith('ORI')){
+   const o=await rpc('percurso_orientadora',{p_token:token});
+   data={participante:o.orientadora,modulos:o.modulos||[],materiais:o.materiais||[],registros:o.registros||[],cartas:o.cartas||[],participantes:o.participantes||[],perfis:o.perfis||[],orientacao:o.orientacao||[],resumo:o.resumo||{}};
  }
 }
 function home(){dirty=false;app.replaceChildren();const top=el('div',undefined,'toolbar');add(top,el('h2','Meu Percurso'),btn('Sair',()=>{sessionStorage.removeItem('percurso_chave');token='';data=null;login();},true));add(app,top,el('p','Olá, '+data.participante.nome+'.'),el('p','Escolha um espaço para escrever ou retomar seus registros.','muted'));const grid=el('div',undefined,'grid');for(const m of data.modulos){const c=el('section',undefined,'card');add(c,el('span',m.data_encontro?new Date(m.data_encontro+'T12:00:00').toLocaleDateString('pt-BR'):'No seu tempo','eyebrow'),el('h3',m.titulo));if(m.id==='e2')c.append(el('p','Folha de Percurso · uma experiência, quatro momentos de escrita.'));if(m.id==='livre')c.append(el('p','Espaço opcional, sem prazo. Você pode registrar mais de uma vez.'));c.append(btn(m.tipo==='memoria'?'Revisitar encontro':m.tipo==='carta'?'Abrir minha carta':'Abrir',()=>openModule(m)));grid.append(c);}app.append(grid);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...data.registros,...data.cartas];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const b=btn((r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em),()=>viewRecord(r),true);const row=el('p');row.append(b);hist.append(row);}app.append(hist);mostrarRespostasRecebidas(app);renderArquivos(hist,{p_token:token},true);}
@@ -154,7 +157,35 @@ function mostrarRespostasRecebidas(container,registroId=null){
  }).catch(()=>{if(sec.isConnected)info.textContent='Não foi possível consultar as respostas agora. Tente novamente mais tarde.';});
 }
 let encontroAtual='inicio';
-function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,navegar:id=>{if(!leave())return;if(id==='inicio')home();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
+function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS'),orientadora=!!data?.participante?.codigo?.startsWith('ORI');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,orientadora,navegar:id=>{if(!leave())return;if(id==='inicio')home();else if(id==='orientacao')abrirOrientacao();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
+
+
+async function abrirOrientacao(){
+ encontroAtual='orientacao';montarParticipante();
+ add(app,el('h2','Orientação da pesquisa'),el('p','Canal privado entre orientadora e pesquisadora. Estas mensagens não integram automaticamente o corpus das coordenadoras e não são visíveis às participantes ou observadoras.','notice'));
+ const fio=el('section',undefined,'card');fio.append(el('h3','Conversa de orientação'));
+ const mensagens=Array.isArray(data.orientacao)?data.orientacao:[];
+ if(!mensagens.length)fio.append(el('p','Ainda não há anotações neste espaço.','muted'));
+ for(const m of mensagens){const a=m.autor==='orientadora'?'Silvia':'Nanny';add(fio,el('p',a+' · '+date(m.criado_em),'muted'),el('p',m.texto,'read'));}
+ const label=el('label','Escrever uma anotação para Nanny'),campo=el('textarea'),status=el('p','','status'),enviar=btn('Enviar anotação',async()=>{const texto=campo.value.trim();if(!texto){status.textContent='Escreva uma anotação antes de enviar.';return;}enviar.disabled=true;status.textContent='Enviando…';try{const salvo=await rpc('orientacao_enviar',{p_token:token,p_texto:texto});data.orientacao.push(salvo);campo.value='';abrirOrientacao();}catch(e){status.textContent='Não foi possível enviar agora.';}finally{enviar.disabled=false;}});
+ campo.maxLength=12000;campo.placeholder='Escreva aqui sua observação, pergunta ou orientação para a pesquisadora.';
+ add(fio,label,campo,enviar,status);app.append(fio);
+}
+function abrirVisaoOrientadora(m){
+ encontroAtual=m.id;montarParticipante();
+ add(app,el('p',m.id==='livre'?'Escuta / Entre encontros':'Encontros / '+m.id.toUpperCase(),'muted'),el('h2',m.id==='livre'?'Entre encontros':m.titulo),el('p',(m.liberado?'Disponível às participantes':'Ainda não liberado às participantes')+' · leitura da orientadora','muted'));
+ const c=m.conteudo||{};
+ if(c.subtitulo)app.append(el('h3',c.subtitulo));
+ for(const p of c.introducao||[])app.append(el('p',p));
+ if(c.importante){const note=el('aside',undefined,'notice');for(const p of c.importante)note.append(el('p',p));app.append(note);}
+ const qs=c.questoes||[];if(qs.length){const sec=el('section',undefined,'card');sec.append(el('h3','Atividade individual'));for(const q of qs)add(sec,el('strong',q.pergunta||q.titulo),el('p','Campo de escrita das participantes.','muted'));app.append(sec);}
+ const regs=(data.registros||[]).filter(r=>r.modulo===m.id);
+ const sec=el('section',undefined,'card');sec.append(el('h3','Registros do corpus · somente leitura'));
+ if(!regs.length)sec.append(el('p','Ainda não há registros neste espaço.','muted'));
+ for(const r of regs){const p=data.participantes?.find(x=>x.id===r.participante_id),box=el('details');box.append(el('summary',(p?.codigo||'')+' — '+(p?.nome||'Participante')+' · '+r.status));for(const [k,v] of Object.entries(r.respostas||{}))add(box,el('strong',qs.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v||'—','read'));sec.append(box);}
+ app.append(sec);
+ const mats=(data.materiais||[]).filter(x=>x.modulo===m.id&&/^https:\/\//i.test(x.url));if(mats.length){const ms=el('section',undefined,'card');ms.append(el('h3','Materiais'));for(const x of mats){const a=el('a',x.titulo+(x.liberado?'':' · ainda oculto às participantes'));a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';ms.append(add(el('p'),a));}app.append(ms);}
+}
 
 function blocoPesquisadora(){
  const sec=el('section',undefined,'pesquisadora-card');
@@ -170,6 +201,11 @@ function blocoPesquisadora(){
 }
 
 function home(){dirty=false;encontroAtual='inicio';montarParticipante();
+app.append(montarAberturaPorEscrito());
+if(data?.participante?.codigo?.startsWith('ORI')){
+ add(app,el('h2','Painel da orientadora · Por Escrito'),el('p','Olá, '+data.participante.nome+'. Você acompanha o percurso e o corpus em modo somente leitura. O único espaço de escrita é o canal privado de orientação com a pesquisadora.','notice'));
+ const resumo=el('section',undefined,'card');resumo.append(el('h3','Visão geral do percurso'));for(const m of data.modulos){const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0),p=el('p'),b=btn((m.id==='livre'?'Entre encontros':m.id==='perfil'?'Um pouco sobre mim':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>abrirVisaoOrientadora(m));p.append(b,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s)','muted'));resumo.append(p);}app.append(resumo);const o=el('section',undefined,'card');add(o,el('h3','Orientação'),el('p','Use este espaço para deixar anotações, perguntas ou orientações para Nanny. Ela poderá ler e responder no painel da pesquisadora.','muted'),btn('Abrir canal privado de orientação',abrirOrientacao));app.append(o);return;
+}
 if(data?.participante?.codigo?.startsWith('OBS')){
  add(app,
    el('h2','Painel de observação · Por Escrito'),
@@ -265,7 +301,7 @@ function abrirVisaoConvidada(m){
    app.append(el('p','Os materiais podem ser abertos para consulta, mas este perfil não altera sua visibilidade nem seu conteúdo.','notice'));
  }
 }
-openModule=function(m){if(data?.participante?.codigo?.startsWith('OBS')){abrirVisaoConvidada(m);return;}encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
+openModule=function(m){if(data?.participante?.codigo?.startsWith('ORI')){abrirVisaoOrientadora(m);return;}if(data?.participante?.codigo?.startsWith('OBS')){abrirVisaoConvidada(m);return;}encontroAtual=m.id;montarParticipante();abrirAnterior(m);if(m.id==='e2')materiaisLiberadosE2();if(m.tipo==='memoria')return;};
 /* A capa é a primeira tela para todas as participantes.
    O token pessoal permanece restrito à sessão e só abre o percurso após clique. */
 (async()=>{
