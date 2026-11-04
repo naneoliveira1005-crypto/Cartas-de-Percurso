@@ -91,10 +91,18 @@ function montarPerfilPesquisadora(editavel=false,chaveAdmin=''){
 
  hero.append(foto,intro);
  const texto=document.createElement('section');texto.className='card texto-nanny';
- texto.append(
-   Object.assign(document.createElement('p'),{textContent:'Minha relação com Barrocas começou antes da pesquisa, em experiências de formação e acompanhamento da rede. Retornar agora como pesquisadora exige de mim outro movimento: escutar sem antecipar respostas, reconhecer o que já conheço e, ao mesmo tempo, permitir que o campo desfaça certezas e produza novas perguntas.'}),
-   Object.assign(document.createElement('p'),{textContent:'Por isso, também me coloco neste percurso. Enquanto vocês escrevem sobre o trabalho vivido, eu preciso olhar para o modo como pergunto, como intervenho, como escuto e como vou me tornando pesquisadora no encontro com vocês.'})
- );
+ const perfilParagrafos=[
+  'Sou uma mulher preta, mãe de João, professora, formadora e assessora educacional. A fé faz parte da minha vida, assim como minhas raízes, minha família e as pessoas que fui encontrando pelo caminho.',
+  'Não consigo separar a mulher da profissional que me tornei. O que vivo também atravessa o modo como olho para a educação, para as pessoas e para o trabalho que faço. Carrego comigo uma necessidade muito forte de justiça e um incômodo com as desigualdades, principalmente quando elas decidem quem pode aprender, quem pode falar, quem é ouvido e quem tem oportunidade.',
+  'Foi na escola pública que comecei a compreender muita coisa sobre educação e também sobre mim. É nela que reconheço meu lugar. Foi ali, convivendo todos os dias com estudantes, professores, famílias e com os desafios reais da escola, que aprendi sobre diferentes formas de aprender e, principalmente, que ensinar exige muito mais do que saber um conteúdo. Exige escuta, estudo, presença, sensibilidade e coragem para rever o que fazemos quando é preciso.',
+  'Depois vieram outros lugares: a formação de professores, a assessoria às redes de ensino, o trabalho com coordenadores e gestores, os projetos construídos com outras pessoas e, mais recentemente, o mestrado. Cada experiência foi trazendo novas perguntas, novas aprendizagens e aquela certeza de que sempre há mais para conhecer.',
+  'Talvez por isso eu não consiga pensar minha trajetória como algo pronto. Continuo estudando, fazendo cursos, lendo, pesquisando, visitando escolas, conversando com professores e aprendendo com as situações que o trabalho coloca diante de mim.',
+  'Não cheguei pronta aos lugares que hoje ocupo. Fui me tornando professora, formadora, assessora e pesquisadora enquanto trabalhava, estudava, errava, acertava, revia escolhas e encontrava pessoas que também me transformaram.',
+  'Acredito muito na força da educação pública e no que ela pode representar na vida de uma pessoa. Mas aprendi, ao longo do caminho, que ela transforma também quem escolhe fazer dela parte da própria vida.',
+  'Eu sou uma dessas pessoas.'
+ ];
+ for(const t of perfilParagrafos){texto.append(Object.assign(document.createElement('p'),{textContent:t}));}
+ const fecho=document.createElement('p');fecho.className='sou-educacao';fecho.innerHTML='<strong>Sou educação.</strong>';texto.append(fecho);
  wrap.append(hero,texto);return wrap;
 }
 
