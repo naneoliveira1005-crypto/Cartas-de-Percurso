@@ -175,6 +175,25 @@ function abrirVisaoOrientadora(m){
  encontroAtual=m.id;montarParticipante();
  add(app,el('p',m.id==='livre'?'Escuta / Entre encontros':'Encontros / '+m.id.toUpperCase(),'muted'),el('h2',m.id==='livre'?'Entre encontros':m.titulo),el('p',(m.liberado?'Disponível às participantes':'Ainda não liberado às participantes')+' · leitura da orientadora','muted'));
  const c=m.conteudo||{};
+ if(m.id==='perfil'){
+   const sec=el('section',undefined,'card');sec.append(el('h3','Perfis das coordenadoras · somente leitura'));
+   const perfis=Array.isArray(data.perfis)?data.perfis:[];
+   if(!perfis.length)sec.append(el('p','Ainda não há perfis disponíveis.','muted'));
+   for(const pf of perfis){
+     const pessoa=data.participantes?.find(x=>x.id===pf.participante_id),box=el('details');
+     box.append(el('summary',(pessoa?.codigo||'')+' — '+(pessoa?.nome||'Participante')));
+     const d=pf.dados||{},x=pf.complementos||{};
+     for(const [rot,v] of [['Atuação atual',d.funcao],['Unidade / setor',d.onde],['Etapas',d.etapas],['Tempo na função',d.tempo_funcao],['Vínculo',d.vinculo],['Como cheguei até aqui',x.chegada],['O que me formou',x.experiencias],['Uma realização que levo comigo',x.realizacao],['Um pouco de mim',x.sobre_mim]])if(v)add(box,el('strong',rot),el('p',v,'read'));
+     sec.append(box);
+   }
+   app.append(sec);return;
+ }
+ if(m.id==='carta'){
+   const sec=el('section',undefined,'card');sec.append(el('h3','Cartas de Percurso · somente leitura'));
+   const cartas=Array.isArray(data.cartas)?data.cartas:[];
+   if(!cartas.length)sec.append(el('p','Ainda não há cartas registradas.','muted'));
+   for(const r of cartas){const p=data.participantes?.find(x=>x.id===r.participante_id),box=el('details');box.append(el('summary',(p?.codigo||'')+' — '+(p?.nome||'Participante')+' · '+r.status));const texto=r.texto_livre||r.respostas?.texto||JSON.stringify(r.respostas||{});box.append(el('p',texto||'—','read'));sec.append(box);}app.append(sec);return;
+ }
  if(c.subtitulo)app.append(el('h3',c.subtitulo));
  for(const p of c.introducao||[])app.append(el('p',p));
  if(c.importante){const note=el('aside',undefined,'notice');for(const p of c.importante)note.append(el('p',p));app.append(note);}
