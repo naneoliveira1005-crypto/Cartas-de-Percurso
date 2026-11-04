@@ -90,6 +90,11 @@ async function mensagensRespostasAdmin(){
  if(!r.ok)throw Error('Não foi possível consultar as respostas da pesquisadora.');
  const x=await r.json();if(!Array.isArray(x))throw Error('Resposta inválida.');return x;
 }
+async function editarRespostaPesquisadora(id,texto){
+ const r=await fetch(API+'percurso_resposta_editar_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_resposta_id:id,p_texto:texto})});
+ const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível editar a resposta.');return x;
+}
+
 async function enviarRespostaPesquisadora(registro,texto){
  const r=await fetch(API+'percurso_responder_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_registro_id:registro,p_texto:texto})});
  const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível enviar a resposta.');return x;
@@ -240,7 +245,28 @@ function render(){
     for(const [k,v] of Object.entries(r.respostas||{}))add(card,el('strong',m.conteudo?.questoes?.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v,'read'));
     if(m.id==='livre'){
       const respostasDeste=respostas.filter(x=>x.registro_id===r.id);
-      for(const resposta of respostasDeste)add(card,el('h3','Sua resposta · '+date(resposta.criado_em)),el('p',resposta.texto,'read'));
+      for(const resposta of respostasDeste){
+       const blocoResp=el('div',undefined,'resposta-pesquisadora');
+       const meta='Sua resposta · '+date(resposta.criado_em)+(resposta.atualizado_em&&resposta.atualizado_em!==resposta.criado_em?' · editada em '+date(resposta.atualizado_em):'');
+       const tituloResp=el('h3',meta),textoResp=el('p',resposta.texto,'read');
+       const editar=btn('Editar resposta',()=>{
+        const campoEd=el('textarea');campoEd.maxLength=12000;campoEd.value=resposta.texto;
+        const statusEd=el('p','','status');
+        const salvarEd=btn('Salvar alteração',async()=>{
+         const novo=campoEd.value.trim();if(!novo){statusEd.textContent='A resposta não pode ficar vazia.';return;}
+         salvarEd.disabled=true;statusEd.textContent='Salvando alteração…';
+         try{
+          const salvo=await editarRespostaPesquisadora(resposta.id,novo);
+          const idx=respostas.findIndex(x=>x.id===salvo.id);if(idx>=0)respostas[idx]=salvo;
+          show();
+         }catch(e){statusEd.textContent='Não foi possível salvar a alteração agora.';}
+         finally{salvarEd.disabled=false;}
+        });
+        const cancelar=btn('Cancelar',show,true);
+        blocoResp.replaceChildren(el('h3','Editar sua resposta'),campoEd,add(el('div',undefined,'actions'),salvarEd,cancelar),statusEd);
+       },true);
+       add(blocoResp,tituloResp,textoResp,editar);card.append(blocoResp);
+      }
       if(r.status==='enviado'){
        const label=el('label','Escrever resposta para '+(pessoa?.nome||'coordenadora')),field=el('textarea'),status=el('p','','status'),b=btn('Enviar resposta',async()=>{
         if(!field.value.trim())throw Error('Escreva a resposta antes de enviar.');
