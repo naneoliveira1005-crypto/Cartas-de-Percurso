@@ -209,6 +209,7 @@ function render(){
       }
       detalhe.append(escrita);
     };
+    if(perfilPendente){sel.value=perfilPendente;perfilPendente=null;sel.onchange();}
    }).catch(()=>box.replaceChildren(el('p','Não foi possível carregar os perfis agora.','error')));
   return;
  }
@@ -252,7 +253,7 @@ function render(){
    if(m.id==='e1')renderArquivos(box,{p_chave:chave},true,data.participantes,{participante:who.value});
    else if(!rows.length)box.append(el('p',m.id==='livre'?'Ainda não há mensagens enviadas nesse espaço.':'Ainda não há registros desta coordenadora neste encontro.','empty'));
   };
-  who.onchange=show;show();
+  who.onchange=show;if(registroPendente){who.value=registroPendente;registroPendente=null;}show();
   if(m.id==='livre')mensagensRespostasAdmin().then(x=>{respostas=x;if(box.isConnected)show();}).catch(()=>{if(box.isConnected)box.prepend(el('p','Não foi possível carregar as devolutivas anteriores. Atualize antes de responder.','error'));});
   return;
  }
