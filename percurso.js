@@ -221,13 +221,9 @@ function blocoPesquisadora(){
 
 function home(){dirty=false;encontroAtual='inicio';montarParticipante();
 app.append(montarAberturaPorEscrito());
-const abrirNanny=()=>{encontroAtual='sobre_pesquisadora';montarParticipante();app.append(montarPerfilPesquisadora());};
-const perfilModulo=data.modulos.find(m=>m.id==='perfil');
-const abrirNos=()=>{if(data?.participante?.codigo?.startsWith('ORI'))abrirVisaoOrientadora(perfilModulo);else if(data?.participante?.codigo?.startsWith('OBS')){abaObservadora='sobre';abrirVisaoConvidada(perfilModulo);}else abrirPerfil();};
-app.append(montarPortasPerfis(abrirNanny,abrirNos));
 if(data?.participante?.codigo?.startsWith('ORI')){
  add(app,el('h2','Painel da orientadora · Por Escrito'),el('p','Olá, '+data.participante.nome+'. Você acompanha o percurso e o corpus em modo somente leitura. O único espaço de escrita é o canal privado de orientação com a pesquisadora.','notice'));
- const resumo=el('section',undefined,'card');resumo.append(el('h3','Visão geral do percurso'));for(const m of data.modulos){const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0),p=el('p'),b=btn((m.id==='livre'?'Entre encontros':m.id==='perfil'?'Um pouco sobre mim':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>abrirVisaoOrientadora(m));p.append(b,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s)','muted'));resumo.append(p);}app.append(resumo);const o=el('section',undefined,'card');add(o,el('h3','Orientação'),el('p','Use este espaço para deixar anotações, perguntas ou orientações para Nanny. Ela poderá ler e responder no painel da pesquisadora.','muted'),btn('Abrir canal privado de orientação',abrirOrientacao));app.append(o);return;
+ const resumo=el('section',undefined,'card');resumo.append(el('h3','Visão geral do percurso'));for(const m of data.modulos){const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0),p=el('p'),b=btn((m.id==='livre'?'Entre encontros':m.id==='perfil'?'Muito sobre nós':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>abrirVisaoOrientadora(m));p.append(b,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s)','muted'));resumo.append(p);}app.append(resumo);const o=el('section',undefined,'card');add(o,el('h3','Orientação'),el('p','Use este espaço para deixar anotações, perguntas ou orientações para Nanny. Ela poderá ler e responder no painel da pesquisadora.','muted'),btn('Abrir canal privado de orientação',abrirOrientacao));app.append(o);return;
 }
 if(data?.participante?.codigo?.startsWith('OBS')){
  add(app,
@@ -243,7 +239,7 @@ if(data?.participante?.codigo?.startsWith('OBS')){
  for(const m of data.modulos){
    const n=Number(data?.resumo?.registros_por_modulo?.[m.id]||0);
    const p=el('p');
-   const abrir=btn((m.id==='livre'?'Entre encontros':m.id==='perfil'?'Um pouco sobre mim':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>{abaObservadora='sobre';abrirVisaoConvidada(m);});
+   const abrir=btn((m.id==='livre'?'Entre encontros':m.id==='perfil'?'Muito sobre nós':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\\d\\s*[—–-]\\s*/,'')),()=>{abaObservadora='sobre';abrirVisaoConvidada(m);});
    p.append(abrir,el('span','  '+(m.liberado?'Liberado':'Ainda não liberado')+' · '+n+' registro(s) produzidos','muted'));
    resumo.append(p);
  }
