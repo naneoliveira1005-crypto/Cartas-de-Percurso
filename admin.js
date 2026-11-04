@@ -75,7 +75,7 @@ async function enviarRespostaPesquisadora(registro,texto){
  const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível enviar a resposta.');return x;
 }
 let encontroAtual='e2',abaAtual='atividade';
-function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}
+function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
  app=montarPainel({modulos:data.modulos.filter(m=>/^e\d$/.test(m.id)||m.id==='livre'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':'atividade';render();},sair:sairPainel});
  if(encontroAtual==='acessos'){painelAcessos();return;}
@@ -128,4 +128,44 @@ function render(){
  }
  if(abaAtual==='materiais'){if(m.id==='e1')renderArquivos(app,{p_chave:chave},false,data.participantes,{coletivo:true});const mats=data.materiais.filter(x=>x.modulo===m.id);for(const x of mats){if(!/^https:\/\//i.test(x.url))continue;const a=el('a',x.titulo+(x.liberado?'':' · Oculto'));a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';app.append(add(el('p'),a));}if(m.id!=='e1'&&!mats.length)app.append(el('p','Ainda não há materiais publicados neste encontro.','empty'));}
 }
-(async()=>{const h=new URLSearchParams(location.hash.slice(1));chave=h.get('chave')||sessionStorage.getItem('percurso_admin')||'';if(location.hash)history.replaceState(null,'',location.pathname);if(!chave){login();return;}app.textContent='Abrindo painel…';try{data=await rpc();sessionStorage.setItem('percurso_admin',chave);render();}catch{login();}})();
+/* A mesma capa abre o portal reservado da pesquisadora antes de carregar o painel.
+   A chave permanece na sessão; só consultar os registros após a entrada explícita. */
+(async()=>{
+ const h=new URLSearchParams(location.hash.slice(1));
+ chave=h.get('chave')||sessionStorage.getItem('percurso_admin')||'';
+ if(location.hash)history.replaceState(null,'',location.pathname+location.search);
+ const acesso=document.querySelector('.enter-cta');
+ if(!acesso){
+  if(!chave){login();return;}
+  app.textContent='Abrindo painel…';
+  try{data=await rpc();sessionStorage.setItem('percurso_admin',chave);render();}
+  catch{login();}
+  return;
+ }
+ acesso.addEventListener('click',async ev=>{
+  ev.preventDefault();
+  if(acesso.dataset.abrindo==='sim')return;
+  if(!chave){login();app.scrollIntoView({block:'start'});return;}
+  acesso.dataset.abrindo='sim';
+  acesso.setAttribute('aria-busy','true');
+  const titulo=acesso.innerHTML;
+  acesso.textContent='Abrindo seu painel…';
+  try{
+   data=await rpc();
+   sessionStorage.setItem('percurso_admin',chave);
+   render();
+   window.scrollTo({top:0,behavior:'auto'});
+  }catch{
+   sessionStorage.removeItem('percurso_admin');
+   chave='';
+   login();
+   const st=document.querySelector('.login .status');
+   if(st)st.textContent='Confira sua chave de pesquisadora e tente novamente.';
+   app.scrollIntoView({block:'start'});
+  }finally{
+   acesso.dataset.abrindo='nao';
+   acesso.removeAttribute('aria-busy');
+   acesso.innerHTML=titulo;
+  }
+ });
+})();
