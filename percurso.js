@@ -25,7 +25,106 @@ async function refresh(){
 function home(){dirty=false;app.replaceChildren();const top=el('div',undefined,'toolbar');add(top,el('h2','Meu Percurso'),btn('Sair',()=>{sessionStorage.removeItem('percurso_chave');token='';data=null;login();},true));add(app,top,el('p','Olá, '+data.participante.nome+'.'),el('p','Escolha um espaço para escrever ou retomar seus registros.','muted'));const grid=el('div',undefined,'grid');for(const m of data.modulos){const c=el('section',undefined,'card');add(c,el('span',m.data_encontro?new Date(m.data_encontro+'T12:00:00').toLocaleDateString('pt-BR'):'No seu tempo','eyebrow'),el('h3',m.titulo));if(m.id==='e2')c.append(el('p','Folha de Percurso · uma experiência, quatro momentos de escrita.'));if(m.id==='livre')c.append(el('p','Espaço opcional, sem prazo. Você pode registrar mais de uma vez.'));c.append(btn(m.tipo==='memoria'?'Revisitar encontro':m.tipo==='carta'?'Abrir minha carta':'Abrir',()=>openModule(m)));grid.append(c);}app.append(grid);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...data.registros,...data.cartas];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const b=btn((r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em),()=>viewRecord(r),true);const row=el('p');row.append(b);hist.append(row);}app.append(hist);mostrarRespostasRecebidas(app);renderArquivos(hist,{p_token:token},true);}
 function back(){if(leave())home();}
 function materialList(m){const box=el('section');for(const a of data.materiais.filter(x=>x.modulo===m.id)){if(!/^https:\/\//i.test(a.url))continue;const p=el('p'),link=el('a',a.titulo);link.href=a.url;link.target='_blank';link.rel='noopener noreferrer';p.append(link);box.append(p);}return box;}
-function openModule(m){if(m.tipo==='carta'){location.href='carta.html';return;}if(m.tipo==='memoria'){app.replaceChildren(btn('← Meu Percurso',back,true),el('h2',m.titulo),el('p','26 de outubro de 2026 · 13h30 às 17h'),el('h3','Para lembrar o nosso primeiro encontro'),el('p','Em 26 de outubro de 2026, nos encontramos on-line para conversar sobre o trabalho real da coordenação pedagógica em Barrocas: o que fazemos, as situações que atravessam o cotidiano e o que precisamos compreender antes de agir.'),el('p','A partilha reuniu registros individuais, conversas em pequenos grupos e perguntas que continuam conosco. Não se tratou de avaliar práticas nem de definir uma resposta única sobre o trabalho de coordenar.'),el('h3','Materiais para revisitar o E1'),el('p','Aqui você encontra os slides apresentados e os arquivos do encontro disponíveis para consulta. Os registros individuais continuam protegidos: cada participante acessa somente os seus.'),materialList(m));renderArquivos(app,{p_token:token},false,[],{modulo:'e1'});return;}const existing=data.registros.find(r=>r.modulo===m.id&&!r.complemento_de);if(m.id!=='livre'&&existing){viewRecord(existing);return;}editor(m,null,null);}
+
+const FOTO_API='https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/perfil-foto';
+async function abrirPerfil(){
+ encontroAtual='perfil';montarParticipante();
+ app.replaceChildren();
+ const carregando=el('p','Abrindo seu perfil…','muted');app.append(carregando);
+ try{
+  let perfil=await rpc('percurso_perfil',{p_token:token});
+  app.replaceChildren();
+
+  const hero=el('section',undefined,'perfil-hero');
+  const foto=el('div',undefined,'perfil-foto');
+  const img=el('img');img.alt='Foto do perfil';img.hidden=true;
+  const monograma=el('div',(perfil.nome||'').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'PE','perfil-iniciais');
+  const file=el('input');file.type='file';file.accept='image/jpeg,image/png,image/webp';file.id='foto-perfil';file.hidden=true;
+  const fotoBtn=btn('Adicionar ou trocar foto',()=>file.click(),true);
+  const fotoNota=el('p','Foto opcional · usada apenas para personalizar seu perfil neste ambiente.','muted');
+  add(foto,img,monograma,file,fotoBtn,fotoNota);
+
+  const intro=el('div',undefined,'perfil-apresentacao');
+  add(intro,
+    el('span','UM POUCO SOBRE MIM','eyebrow'),
+    el('h2',perfil.nome),
+    el('p','Este espaço reúne o que você já contou sobre sua trajetória e abre lugar para acrescentar um pouco mais sobre quem você é no trabalho da coordenação/articulação pedagógica.','perfil-lead'),
+    el('p','Complete até 19/11. Você pode salvar e voltar quantas vezes precisar.','notice')
+  );
+  add(hero,foto,intro);app.append(hero);
+
+  async function carregarFoto(){
+   try{
+    const rr=await fetch(FOTO_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+    const x=await rr.json();
+    if(rr.ok&&x.url){img.src=x.url;img.hidden=false;monograma.hidden=true;}
+   }catch{}
+  }
+  carregarFoto();
+
+  file.onchange=async()=>{
+   const f=file.files?.[0];if(!f)return;
+   fotoBtn.disabled=true;fotoBtn.textContent='Enviando foto…';
+   try{
+    const fd=new FormData();fd.append('token',token);fd.append('file',f);
+    const rr=await fetch(FOTO_API,{method:'POST',body:fd});const x=await rr.json();
+    if(!rr.ok)throw Error(x.error||'Falha');
+    img.src=x.url;img.hidden=false;monograma.hidden=true;fotoBtn.textContent='Trocar foto';
+   }catch{fotoNota.textContent='Não foi possível enviar a foto agora. Tente novamente.';fotoNota.classList.add('error');}
+   finally{fotoBtn.disabled=false;}
+  };
+
+  const d=perfil.dados||{};
+  const grade=el('section',undefined,'perfil-dados-grid');
+  const cartao=(titulo,linhas)=>{
+   const c=el('article',undefined,'perfil-dado-card');c.append(el('span',titulo,'eyebrow'));
+   for(const [rotulo,valor] of linhas){if(!valor)continue;const bloco=el('div',undefined,'perfil-dado-linha');add(bloco,el('small',rotulo),el('strong',valor));c.append(bloco);}
+   return c;
+  };
+  grade.append(
+   cartao('ONDE ESTOU',[['Atuação atual',d.funcao],['Unidade / setor',d.onde],['Etapas que acompanho',d.etapas]]),
+   cartao('MEU TEMPO',[['Na função atual',d.tempo_funcao],['Na Rede Municipal',d.tempo_rede]]),
+   cartao('MEU VÍNCULO',[['Vínculo',d.vinculo],['Como exerço a função',d.forma_exercicio],['Cargo/função de origem',d.cargo_origem||d.outra_funcao]]),
+   cartao('EXPERIÊNCIAS ANTERIORES',[['Atuou como professora?',d.atuou_professora],['Etapas/modalidades',d.etapas_docencia],['Já exerceu coordenação?',d.coord_anterior],['Sobre essa experiência',d.tempo_coord_anterior]])
+  );
+  app.append(grade);
+
+  add(app,
+   el('h3','Agora, acrescente um pouco de você'),
+   el('p','Aqui não é para repetir os dados acima. Escreva apenas o que ajuda a contar seu percurso com suas próprias palavras.','muted')
+  );
+
+  const campos=el('section',undefined,'perfil-escrita-grid');
+  const defs=[
+   ['chegada','COMO CHEGUEI ATÉ AQUI','Como aconteceu sua chegada à coordenação/articulação pedagógica?'],
+   ['experiencias','O QUE ME FORMOU','Que experiências, formações ou funções anteriores você considera importantes para o trabalho que realiza hoje?'],
+   ['realizacao','UMA REALIZAÇÃO QUE LEVO COMIGO','Há alguma realização, experiência ou momento do seu percurso profissional que você gostaria de registrar aqui?'],
+   ['sobre_mim','UM POUCO DE MIM','Se você fosse se apresentar em poucas linhas como profissional da coordenação/articulação pedagógica, o que gostaria de dizer sobre você?']
+  ];
+  const fields={};
+  for(const [id,titulo,pergunta] of defs){
+    const c=el('article',undefined,'perfil-escrita-card'),lab=el('label',pergunta),ta=el('textarea');
+    ta.id='perfil-'+id;lab.htmlFor=ta.id;ta.maxLength=5000;ta.value=perfil.complementos?.[id]||'';
+    ta.oninput=()=>{dirty=true;status.textContent='Há alterações ainda não salvas.';};
+    add(c,el('span',titulo,'eyebrow'),lab,ta);campos.append(c);fields[id]=ta;
+  }
+  app.append(campos);
+  const status=el('p','Você pode salvar e continuar depois.','status');
+  const salvar=btn('Salvar meu perfil',async()=>{
+    salvar.disabled=true;status.textContent='Salvando…';
+    try{
+      perfil=await rpc('percurso_perfil_salvar',{p_token:token,p_complementos:Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.value]))});
+      dirty=false;status.textContent='Perfil salvo no Por Escrito.';
+    }catch(e){status.textContent='Não foi possível salvar agora. Seu texto continua nesta tela.';status.classList.add('error');}
+    finally{salvar.disabled=false;}
+  });
+  add(app,el('div',undefined,'perfil-actions'),salvar,status);
+ }catch(e){
+  app.replaceChildren(el('h2','Um pouco sobre mim'),el('p','Não foi possível carregar seu perfil agora. Tente novamente.','error'));
+ }
+}
+
+function openModule(m){if(m.tipo==='perfil'){abrirPerfil();return;}if(m.tipo==='carta'){location.href='carta.html';return;}if(m.tipo==='memoria'){app.replaceChildren(btn('← Meu Percurso',back,true),el('h2',m.titulo),el('p','26 de outubro de 2026 · 13h30 às 17h'),el('h3','Para lembrar o nosso primeiro encontro'),el('p','Em 26 de outubro de 2026, nos encontramos on-line para conversar sobre o trabalho real da coordenação pedagógica em Barrocas: o que fazemos, as situações que atravessam o cotidiano e o que precisamos compreender antes de agir.'),el('p','A partilha reuniu registros individuais, conversas em pequenos grupos e perguntas que continuam conosco. Não se tratou de avaliar práticas nem de definir uma resposta única sobre o trabalho de coordenar.'),el('h3','Materiais para revisitar o E1'),el('p','Aqui você encontra os slides apresentados e os arquivos do encontro disponíveis para consulta. Os registros individuais continuam protegidos: cada participante acessa somente os seus.'),materialList(m));renderArquivos(app,{p_token:token},false,[],{modulo:'e1'});return;}const existing=data.registros.find(r=>r.modulo===m.id&&!r.complemento_de);if(m.id!=='livre'&&existing){viewRecord(existing);return;}editor(m,null,null);}
 function viewRecord(r){const m=data.modulos.find(x=>x.id===r.modulo);if(r.status==='rascunho'&&m&&m.tipo!=='carta'){editor(m,r,r.complemento_de);return;}app.replaceChildren(btn('← Meu Percurso',back,true),el('h2',m?.titulo||r.modulo.toUpperCase()),el('p',(r.complemento_de?'Complemento · ':'')+'Enviado em '+date(r.enviado_em),'muted'));const qs=m?.conteudo?.questoes||[];for(const [k,v] of Object.entries(r.respostas||{})){const b=el('section',undefined,'block');add(b,el('h3',qs.find(q=>q.id===k)?.pergunta||'Registro'),el('p',v||'—','read'));app.append(b);}app.append(el('p','O texto enviado é preservado. Novas reflexões podem ser acrescentadas em um complemento separado.','muted'));if(m&&m.tipo!=='carta')app.append(btn('Acrescentar complemento',()=>editor(m,null,r.id)));}
 function editor(m,r,complemento){dirty=false;app.replaceChildren(btn('← Meu Percurso',back,true),el('h2',m.titulo));const c=m.conteudo||{};if(!complemento){app.append(el('h3',c.subtitulo||''));for(const p of c.introducao||[])app.append(el('p',p));if(c.importante){const n=el('aside',undefined,'notice');n.append(el('strong','IMPORTANTE'));for(const p of c.importante)n.append(el('p',p));app.append(n);}}else app.append(el('p','Este complemento será guardado separadamente. O registro original permanece intacto.','notice'));
  const qs=complemento?[{id:'texto',titulo:'Complemento',pergunta:'O que você deseja acrescentar ao seu registro?'}]:c.questoes||[];let id=r?.id||crypto.randomUUID(),revision=r?.revisao||0;const fields={};for(const q of qs){const b=el('section',undefined,'block'),label=el('label',q.pergunta),t=el('textarea');t.id=q.id;label.htmlFor=q.id;t.value=r?.respostas?.[q.id]||'';t.maxLength=22000;t.oninput=()=>{dirty=true;status.textContent='Alterações ainda não salvas. Use “Salvar rascunho”.';};add(b,el('span',q.titulo,'eyebrow'),label,t);fields[q.id]=t;app.append(b);}const status=el('p',r?'Rascunho salvo em '+date(r.atualizado_em):'Salve seu rascunho para continuar em outro momento.','status');status.setAttribute('role','status');const actions=el('div',undefined,'actions');const save=btn('Salvar rascunho',()=>saveRecord(false),true),send=btn('Enviar registro',()=>saveRecord(true));add(actions,save,send);add(app,el('p','Somente você e a pesquisadora acessam este registro. Não há transferência automática para espaços coletivos.','muted'),actions,status);
