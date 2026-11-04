@@ -8,19 +8,41 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
 }
 function chaveDoAcesso(valor){const text=valor.trim();try{const u=new URL(text);if(u.protocol==='https:'||u.protocol==='http:'){const h=new URLSearchParams(u.hash.slice(1));return (u.searchParams.get('token')||h.get('token')||h.get('chave')||'').trim();}}catch{}return text;}
 function montarAberturaPorEscrito(){
- const wrap=document.createElement('section');wrap.className='abertura-por-escrito';
+ const wrap=document.createElement('section');wrap.className='abertura-por-escrito abertura-texto';
  const titulo=document.createElement('span');titulo.className='eyebrow';titulo.textContent='POR ESCRITO — PERCURSOS DE UMA COORDENADORA';
- const h=document.createElement('h2');h.textContent='Um lugar para registrar, retomar e compreender o percurso.';
- const p=document.createElement('p');p.className='perfil-lead';p.textContent='Por Escrito é um espaço de acompanhamento da pesquisa. Aqui, registros, perguntas, memórias e materiais podem ser retomados ao longo do caminho, sem transformar o percurso em uma sequência de tarefas. É um lugar para guardar o que o encontro faz pensar e perceber o que ganha novos sentidos quando voltamos ao que foi vivido.';
+ const h=document.createElement('h2');h.textContent='Um lugar para pensar a profissão a partir do que vivemos.';
+ const p1=document.createElement('p');p1.className='abertura-paragrafo';p1.textContent='A coordenação pedagógica é feita de muitas coisas ao mesmo tempo: escuta, escolhas, encontros, urgências, formação, acompanhamento, perguntas e decisões que nem sempre chegam prontas. Entre o que planejamos e o que de fato acontece, vamos construindo modos de olhar, de agir e de compreender o trabalho.';
+ const p2=document.createElement('p');p2.className='abertura-paragrafo';p2.textContent='O Por Escrito nasce como um convite para interromper um pouco a pressa e voltar o olhar para esse percurso. Aqui, não buscamos respostas certas sobre o que significa ser coordenadora. Buscamos palavras para aquilo que vivemos, perguntas para o que ainda não compreendemos e pistas sobre os saberes que vamos construindo no exercício da profissão.';
+ const p3=document.createElement('p');p3.className='abertura-paragrafo';p3.textContent='Escrever, neste espaço, é também poder voltar. Voltar a uma situação, a uma escolha, a uma dúvida, a uma lembrança. Às vezes, só quando retomamos o vivido conseguimos perceber o que ele produziu em nós. Talvez por isso faça tanto sentido lembrar que:';
  const ep=document.createElement('blockquote');ep.className='epigrafe';ep.textContent='“A experiência é o que nos passa, o que nos acontece, o que nos toca.”';
- const fonte=document.createElement('p');fonte.className='muted';fonte.textContent='Jorge Larrosa Bondía · Notas sobre a experiência e o saber de experiência (2002)';
+ const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';
+ const p4=document.createElement('p');p4.className='abertura-paragrafo';p4.textContent='É desse lugar que este percurso pretende acompanhar o tornar-se coordenadora: não como uma identidade pronta, mas como uma construção que acontece no trabalho, nas relações, nas escolhas, nos impasses e nas aprendizagens que vão nos formando.';
  const ass=document.createElement('blockquote');ass.className='assinatura-percurso';ass.textContent='“Há percursos que só conseguimos compreender quando encontramos um lugar para escrevê-los.”';
- const assinatura=document.createElement('p');assinatura.className='muted';assinatura.textContent='Nanny Oliveira';
- const duo=document.createElement('div');duo.className='duo-percurso';
- const mim=document.createElement('article');mim.className='card';
- mim.innerHTML='<span class="eyebrow">UM POUCO SOBRE MIM</span><h3>Nanny Oliveira</h3><p>Chego a esta pesquisa como professora, formadora e pesquisadora, trazendo uma relação com Barrocas que antecede esta investigação. Por isso, estar aqui também exige de mim escuta, revisão de certezas e atenção ao que minhas próprias intervenções produzem no percurso.</p>';
- const nos=document.createElement('article');nos.className='card';
- nos.innerHTML='<span class="eyebrow">MUITO SOBRE NÓS</span><h3>As coordenadoras que fazem este percurso</h3><p>Este percurso é construído com coordenadoras e articuladoras pedagógicas da Rede Municipal de Barrocas. Suas trajetórias, tempos de experiência, perguntas, diferenças, impasses e saberes produzidos no trabalho cotidiano dão forma ao que esta pesquisa pode compreender.</p>';
- duo.append(mim,nos);wrap.append(titulo,h,p,ep,fonte,ass,assinatura,duo);return wrap;
+ const assinatura=document.createElement('p');assinatura.className='autor-citacao';assinatura.textContent='Nanny Oliveira';
+ const prox=document.createElement('div');prox.className='daqui-em-diante';
+ const ph=document.createElement('h3');ph.textContent='O que você vai encontrar daqui para frente';
+ const pp=document.createElement('p');pp.textContent='Um espaço para conhecer quem caminha nesta pesquisa, registrar sua própria trajetória, participar dos Encontros de Partilha, retomar materiais e registros, escrever entre um encontro e outro e acompanhar, ao longo do tempo, o que esse percurso vai fazendo aparecer.';
+ prox.append(ph,pp);
+ wrap.append(titulo,h,p1,p2,p3,ep,fonte,p4,ass,assinatura,prox);return wrap;
 }
-window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;
+
+function montarPerfilPesquisadora(){
+ const wrap=document.createElement('section');wrap.className='perfil-pesquisadora-publico';
+ const hero=document.createElement('section');hero.className='perfil-hero';
+ const foto=document.createElement('div');foto.className='perfil-foto';
+ const img=document.createElement('img');img.alt='Foto de Nanny Oliveira';img.src='foto-nanny-oliveira.jpg';img.onerror=()=>{img.hidden=true;iniciais.hidden=false;};img.onload=()=>{img.hidden=false;iniciais.hidden=true;};
+ const iniciais=document.createElement('div');iniciais.className='perfil-iniciais';iniciais.textContent='NO';
+ foto.append(img,iniciais);
+ const intro=document.createElement('div');intro.className='perfil-apresentacao';
+ const olho=document.createElement('span');olho.className='eyebrow';olho.textContent='UM POUCO SOBRE MIM';
+ const h=document.createElement('h2');h.textContent='Nanny Oliveira';
+ const p=document.createElement('p');p.className='perfil-lead';p.textContent='Antes de ser a pesquisadora deste percurso, sou professora. É desse lugar — atravessado pela sala de aula, pela formação de professores, pela coordenação de processos formativos e pelas muitas perguntas que a educação continua me fazendo — que chego a esta pesquisa.';
+ intro.append(olho,h,p);hero.append(foto,intro);
+ const texto=document.createElement('section');texto.className='card texto-nanny';
+ texto.append(
+   Object.assign(document.createElement('p'),{textContent:'Minha relação com Barrocas começou antes da pesquisa, em experiências de formação e acompanhamento da rede. Retornar agora como pesquisadora exige de mim outro movimento: escutar sem antecipar respostas, reconhecer o que já conheço e, ao mesmo tempo, permitir que o campo desfaça certezas e produza novas perguntas.'}),
+   Object.assign(document.createElement('p'),{textContent:'Por isso, também me coloco neste percurso. Enquanto vocês escrevem sobre o trabalho vivido, eu preciso olhar para o modo como pergunto, como intervenho, como escuto e como vou me tornando pesquisadora no encontro com vocês.'})
+ );
+ wrap.append(hero,texto);return wrap;
+}
+window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;window.montarPerfilPesquisadora=montarPerfilPesquisadora;
