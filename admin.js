@@ -152,12 +152,13 @@ function painelNovidades(){
  }).catch(()=>corpo.replaceChildren(el('p','Não foi possível consultar as novidades agora.','error')));
 }
 
-let encontroAtual='e2',abaAtual='atividade',registroPendente=null,perfilPendente=null,veioDeNovidade=false;
+let encontroAtual='inicio',abaAtual='atividade',registroPendente=null,perfilPendente=null,veioDeNovidade=false;
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
  app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
  if(veioDeNovidade&&encontroAtual!=='inicio'){const voltar=btn('← Voltar ao início',()=>{veioDeNovidade=false;encontroAtual='inicio';abaAtual='atividade';render();});voltar.classList.add('secondary');const linha=el('div',undefined,'toolbar voltar-notificacao');linha.append(voltar);app.append(linha);}
  if(encontroAtual==='sobre_pesquisadora'){app.append(montarPerfilPesquisadora(true,chave));return;}
+ if(encontroAtual==='novidades'){painelNovidades();return;}
  if(encontroAtual==='orientacao'){painelOrientacao();return;}
  if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
