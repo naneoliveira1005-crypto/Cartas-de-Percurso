@@ -3,7 +3,15 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
  document.body.classList.add('dashboard');const root=document.getElementById('app');root.replaceChildren();
  const nav=document.createElement('nav');nav.className='sidebar';nav.setAttribute('aria-label','Encontros');
  const add=(id,titulo,sub)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}b.onclick=()=>navegar(id);nav.append(b);};
- add('inicio','Início');for(const m of modulos)add(m.id,m.id==='livre'?'Entre encontros':/^e\d$/.test(m.id)?m.id.toUpperCase():m.titulo,m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora)&&!m.liberado?' · Não liberado':''));if(pesquisadora){add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}if(orientadora)add('orientacao','Orientação','Canal privado com Nanny');
+ add('inicio','Início','Por Escrito');
+ add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira');
+ for(const m of modulos)add(
+   m.id,
+   m.id==='perfil'?'Muito sobre nós':m.id==='livre'?'Entre encontros':/^e\d$/.test(m.id)?m.id.toUpperCase():m.titulo,
+   m.id==='perfil'?'Minha trajetória':m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':'')
+ );
+ if(pesquisadora){add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
+ if(orientadora)add('orientacao','Orientação','Canal privado com Nanny');
  const content=document.createElement('section');content.className='workspace';const identity=document.createElement('div');identity.className='identity';const n=document.createElement('span');n.textContent=(pesquisadora?'Pesquisadora · ':orientadora?'Orientadora · ':observadora?'Observadora · ':'Meu percurso · ')+nome;const out=document.createElement('button');out.className='secondary';out.textContent='Sair';out.onclick=sair;identity.append(n,out);content.append(identity);const panel=document.createElement('div');panel.id='conteudo';content.append(panel);root.append(nav,content);return panel;
 }
 function chaveDoAcesso(valor){const text=valor.trim();try{const u=new URL(text);if(u.protocol==='https:'||u.protocol==='http:'){const h=new URLSearchParams(u.hash.slice(1));return (u.searchParams.get('token')||h.get('token')||h.get('chave')||'').trim();}}catch{}return text;}
