@@ -54,7 +54,7 @@ async function painelAcessos(){
   obs.replaceChildren(el('h3','Observadoras convidadas · painel espelho'));
   for(const o of observadoras){
    const estado=o.ativo?'ATIVO':'INATIVO';
-   const acesso=o.primeiro_acesso_em?' · já acessou':' · ainda não acessou';
+   const acesso=o.primeiro_acesso_em?' · acesso técnico validado':' · sem registro de abertura';
    add(obs,el('p',o.codigo+' — '+o.nome+' · '+(o.email||'sem e-mail')+' · '+estado+acesso));
   }
   add(obs,
