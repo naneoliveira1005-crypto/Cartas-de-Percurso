@@ -2,10 +2,12 @@
 function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,navegar,sair}){
  document.body.classList.add('dashboard');const root=document.getElementById('app');root.replaceChildren();
  const nav=document.createElement('nav');nav.className='sidebar';nav.setAttribute('aria-label','Encontros');
- const add=(id,titulo,sub)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}b.onclick=()=>navegar(id);nav.append(b);};
+ const add=(id,titulo,sub,target=nav)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}b.onclick=()=>navegar(id);target.append(b);return b;};
  add('inicio','Início','Por Escrito');
- add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira');
- for(const m of modulos)add(
+ const perfis=document.createElement('div');perfis.className='nav-profile-pair';nav.append(perfis);
+ add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira',perfis);
+ const perfilModulo=modulos.find(m=>m.id==='perfil');if(perfilModulo)add('perfil','Muito sobre nós','Minha trajetória',perfis);
+ for(const m of modulos.filter(m=>m.id!=='perfil'))add(
    m.id,
    m.id==='perfil'?'Muito sobre nós':m.id==='livre'?'Entre encontros':/^e\d$/.test(m.id)?m.id.toUpperCase():m.titulo,
    m.id==='perfil'?'Minha trajetória':m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':'')
