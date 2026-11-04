@@ -122,13 +122,14 @@ let encontroAtual='e2',abaAtual='atividade';
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
  app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ if(encontroAtual==='sobre_pesquisadora'){app.append(montarPerfilPesquisadora());return;}
  if(encontroAtual==='orientacao'){painelOrientacao();return;}
  if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
  if(encontroAtual==='inicio'){app.append(montarAberturaPorEscrito());add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id)||x.id==='livre')){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
  const m=data.modulos.find(x=>x.id===encontroAtual);if(!m)return;
  if(m.id==='perfil'){
-  add(app,el('h2','Um pouco sobre mim'),el('p','Acompanhe os perfis individuais sem misturá-los aos registros dos encontros. Os dados objetivos vêm da ficha de caracterização; os campos pessoais são complementados no Por Escrito.','muted'));
+  add(app,el('h2','Muito sobre nós'),el('p','Aqui você acompanha os perfis individuais das coordenadoras sem misturá-los aos registros dos encontros. Os dados objetivos vêm da ficha de caracterização; os campos pessoais são complementados no Por Escrito.','muted'));
   const box=el('section',undefined,'card');box.append(el('p','Carregando perfis…','muted'));app.append(box);
   fetch(API+'percurso_perfis_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})})
    .then(async r=>{if(!r.ok)throw Error();return r.json();})
