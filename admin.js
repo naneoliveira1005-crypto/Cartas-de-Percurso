@@ -94,13 +94,38 @@ async function enviarRespostaPesquisadora(registro,texto){
  const r=await fetch(API+'percurso_responder_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_registro_id:registro,p_texto:texto})});
  const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível enviar a resposta.');return x;
 }
+
+async function orientacaoAdmin(){
+ const r=await fetch(API+'orientacao_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
+ const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível consultar a orientação.');return Array.isArray(x)?x:[];
+}
+async function responderOrientacao(texto){
+ const r=await fetch(API+'orientacao_responder_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_texto:texto})});
+ const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível enviar a resposta.');return x;
+}
+async function painelOrientacao(){
+ add(app,el('h2','Orientação da pesquisa'),el('p','Canal privado entre você e Silvia. As mensagens deste espaço não são visíveis às coordenadoras nem às observadoras e não entram automaticamente no corpus.','notice'));
+ const box=el('section',undefined,'card');box.append(el('p','Carregando conversa…','muted'));app.append(box);
+ try{
+   let msgs=await orientacaoAdmin();
+   const desenhar=()=>{
+     box.replaceChildren(el('h3','Conversa com Silvia'));
+     if(!msgs.length)box.append(el('p','Ainda não há anotações neste espaço.','muted'));
+     for(const m of msgs){const a=m.autor==='orientadora'?'Silvia':'Nanny';add(box,el('p',a+' · '+date(m.criado_em),'muted'),el('p',m.texto,'read'));}
+     const label=el('label','Responder / escrever para Silvia'),campo=el('textarea'),status=el('p','','status'),b=btn('Enviar resposta',async()=>{const texto=campo.value.trim();if(!texto){status.textContent='Escreva a mensagem antes de enviar.';return;}const salvo=await responderOrientacao(texto);msgs.push(salvo);desenhar();});
+     campo.maxLength=12000;campo.placeholder='Escreva aqui sua resposta ou anotação para a orientadora.';add(box,label,campo,b,status);
+   };desenhar();
+ }catch(e){box.replaceChildren(el('p','Não foi possível carregar o canal de orientação agora.','error'));}
+}
+
 let encontroAtual='e2',abaAtual='atividade';
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
  app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ if(encontroAtual==='orientacao'){painelOrientacao();return;}
  if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
- if(encontroAtual==='inicio'){add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id)||x.id==='livre')){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
+ if(encontroAtual==='inicio'){app.append(montarAberturaPorEscrito());add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id)||x.id==='livre')){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
  const m=data.modulos.find(x=>x.id===encontroAtual);if(!m)return;
  if(m.id==='perfil'){
   add(app,el('h2','Um pouco sobre mim'),el('p','Acompanhe os perfis individuais sem misturá-los aos registros dos encontros. Os dados objetivos vêm da ficha de caracterização; os campos pessoais são complementados no Por Escrito.','muted'));
