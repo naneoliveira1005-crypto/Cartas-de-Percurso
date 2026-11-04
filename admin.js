@@ -43,6 +43,13 @@ async function painelAcessos(){
  person.setAttribute('aria-label','Coordenadora para acesso individual');
  add(sec,el('h3','Copiar um acesso por vez'),person,status,detail);
  app.append(sec);
+ const obs=el('section',undefined,'card');
+ add(obs,el('h3','Observadoras convidadas · painel espelho'),
+ el('p','OBS01 — Verônica Domingues Almeida · cadastro de acesso não localizado; ativação pendente.'),
+ el('p','OBS02 — Priscila Maria Possidonio de Oliveira · cadastro de acesso não localizado; ativação pendente.'),
+ el('p','Permissões previstas: ver módulos, atividades, materiais, estado de liberação e contagens gerais; somente leitura. Sem acesso a nomes ou registros individuais, sem alterações, respostas ou liberação de materiais.','muted'),
+ el('p','Esta seção registra a situação verificada. Não constitui um convite ativo e não exibe credenciais.','muted'));
+ app.append(obs);
  let links=[];
  try{
   const r=await fetch(API+'percurso_links_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
