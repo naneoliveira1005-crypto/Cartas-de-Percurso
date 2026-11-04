@@ -398,3 +398,26 @@ label,
 h1,h2,h3,h4{
   text-align:initial;
 }
+
+/* Citações acadêmicas discretas na abertura */
+.abertura-texto .citacao-site{
+  margin:1rem 0 .25rem 4rem;
+  padding:0;
+  border-left:0;
+  background:transparent;
+  font:normal 15px/1.5 Arial,sans-serif;
+  color:var(--ink);
+}
+.abertura-texto .autor-citacao{
+  margin:.2rem 0 1.25rem;
+  padding:0;
+  text-align:right;
+  font:normal 13px/1.4 Arial,sans-serif;
+  color:var(--muted);
+}
+.abertura-texto .assinatura-percurso{
+  margin-top:1rem;
+}
+@media(max-width:680px){
+  .abertura-texto .citacao-site{margin-left:1.5rem}
+}
