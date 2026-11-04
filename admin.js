@@ -97,11 +97,35 @@ async function enviarRespostaPesquisadora(registro,texto){
 let encontroAtual='e2',abaAtual='atividade';
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
 function render(){
- app=montarPainel({modulos:data.modulos.filter(m=>/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':'atividade';render();},sair:sairPainel});
+ app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
  if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
  if(encontroAtual==='inicio'){add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id)||x.id==='livre')){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
  const m=data.modulos.find(x=>x.id===encontroAtual);if(!m)return;
+ if(m.id==='perfil'){
+  add(app,el('h2','Um pouco sobre mim'),el('p','Acompanhe os perfis individuais sem misturá-los aos registros dos encontros. Os dados objetivos vêm da ficha de caracterização; os campos pessoais são complementados no Por Escrito.','muted'));
+  const box=el('section',undefined,'card');box.append(el('p','Carregando perfis…','muted'));app.append(box);
+  fetch(API+'percurso_perfis_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})})
+   .then(async r=>{if(!r.ok)throw Error();return r.json();})
+   .then(perfis=>{
+    box.replaceChildren();
+    const completos=perfis.filter(p=>Object.values(p.complementos||{}).some(v=>String(v||'').trim())).length;
+    add(box,el('h3','Perfis das participantes'),el('p',completos+' de '+perfis.length+' participantes já acrescentaram informações pessoais.','notice'));
+    const sel=select([['','Escolha uma participante'],...perfis.map(p=>[p.participante_id,p.codigo+' — '+p.nome])]);
+    const detalhe=el('div');box.append(sel,detalhe);
+    sel.onchange=()=>{
+      detalhe.replaceChildren();const p=perfis.find(x=>x.participante_id===sel.value);if(!p)return;
+      const d=p.dados||{},x=p.complementos||{};
+      add(detalhe,el('h3',p.nome),el('p',(d.funcao||'')+(d.onde?' · '+d.onde:''),'read'));
+      const grid=el('div',undefined,'perfil-dados-grid');
+      const card=(t,v)=>{const a=el('article',undefined,'perfil-dado-card');add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não informado','read'));return a;};
+      grid.append(card('ETAPAS',d.etapas),card('TEMPO NA FUNÇÃO',d.tempo_funcao),card('VÍNCULO',d.vinculo),card('TEMPO NA REDE',d.tempo_rede));detalhe.append(grid);
+      const textos=[['COMO CHEGUEI ATÉ AQUI',x.chegada],['O QUE ME FORMOU',x.experiencias],['UMA REALIZAÇÃO QUE LEVO COMIGO',x.realizacao],['UM POUCO DE MIM',x.sobre_mim]];
+      for(const [t,v] of textos){const a=el('section',undefined,'block');add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não preenchido.','read'));detalhe.append(a);}
+    };
+   }).catch(()=>box.replaceChildren(el('p','Não foi possível carregar os perfis agora.','error')));
+  return;
+ }
  add(app,el('p',m.id==='livre'?'Escuta / Entre encontros':m.id==='carta'?'Escrita individual protegida':'Encontros / '+m.id.toUpperCase(),'muted'),el('h2',m.id==='livre'?'Entre encontros':m.titulo),el('p',m.id==='livre'?'Espaço opcional de comunicação e acompanhamento':m.data_encontro?new Date(m.data_encontro+'T12:00:00').toLocaleDateString('pt-BR')+' · 13h30 às 17h':'Data a definir','muted'));
  if(m.id==='livre')app.append(el('p','Este canal complementar permite que a coordenadora escreva à pesquisadora entre os encontros. É opcional e não constitui uma nova atividade obrigatória nem um encontro adicional. Mensagens e devolutivas permanecem disponíveis no percurso individual e podem ajudar a acompanhar as intervenções da pesquisadora, nos limites do consentimento.','notice'));
  const tabs=el('div',undefined,'tabs');for(const [id,label] of [['sobre',m.id==='livre'?'Sobre o espaço':'Sobre o encontro'],['atividade',m.id==='livre'?'Campo de escrita':'Atividade individual'],['registros',m.id==='livre'?'Mensagens e respostas':'Registros'],['materiais','Materiais']]){const b=btn(label,()=>{abaAtual=id;render();});if(id===abaAtual)b.classList.add('active');tabs.append(b);}app.append(tabs);
