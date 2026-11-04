@@ -36,7 +36,7 @@ function montarAberturaPorEscrito(){
  wrap.append(titulo,h);
  for(let i=0;i<paragrafos.length;i++){
    const p=document.createElement('p');p.className='abertura-paragrafo';p.textContent=paragrafos[i];wrap.append(p);
-   if(i===2){const fonte=document.createElement('p');fonte.className='autor-citacao';fonte.textContent='Jorge Larrosa, 2002';wrap.append(fonte);}
+
  }
  const final=document.createElement('p');final.className='abertura-paragrafo';final.innerHTML='Bem-vinda ao seu <strong>Por Escrito</strong>.';wrap.append(final);
  const despedida=document.createElement('p');despedida.className='despedida-nanny';despedida.innerHTML='Um abraço carinhoso,<br><strong>Nanny Oliveira</strong>';wrap.append(despedida);
