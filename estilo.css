@@ -134,3 +134,7 @@
 @media(min-width:821px){
  .pesquisadora-perfil-escrita{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+.perfil-foto-acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:2px}
+.perfil-foto-acoes button{width:auto}
+@media(max-width:520px){.perfil-foto-acoes{flex-direction:column;width:100%}.perfil-foto-acoes button{width:100%}}
