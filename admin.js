@@ -108,6 +108,10 @@ async function responderOrientacao(texto){
  const r=await fetch(API+'orientacao_responder_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_texto:texto})});
  const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível enviar a resposta.');return x;
 }
+async function editarOrientacao(id,texto){
+ const r=await fetch(API+'orientacao_editar_admin',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave,p_id:id,p_texto:texto})});
+ const x=await r.json();if(!r.ok)throw Error(x?.message||'Não foi possível editar a mensagem.');return x;
+}
 async function painelOrientacao(){
  add(app,el('h2','Orientação da pesquisa'),el('p','Canal privado entre você e Silvia. As mensagens deste espaço não são visíveis às coordenadoras nem às observadoras e não entram automaticamente no corpus.','notice'));
  const box=el('section',undefined,'card');box.append(el('p','Carregando conversa…','muted'));app.append(box);
@@ -116,7 +120,32 @@ async function painelOrientacao(){
    const desenhar=()=>{
      box.replaceChildren(el('h3','Conversa com Silvia'));
      if(!msgs.length)box.append(el('p','Ainda não há anotações neste espaço.','muted'));
-     for(const m of msgs){const a=m.autor==='orientadora'?'Silvia':'Nanny';add(box,el('p',a+' · '+date(m.criado_em),'muted'),el('p',m.texto,'read'));}
+     for(const m of msgs){
+       const a=m.autor==='orientadora'?'Silvia':'Nanny';
+       const bloco=el('div',undefined,'resposta-pesquisadora');
+       const meta=a+' · '+date(m.criado_em)+(m.atualizado_em&&m.atualizado_em!==m.criado_em?' · editada em '+date(m.atualizado_em):'');
+       add(bloco,el('p',meta,'muted'),el('p',m.texto,'read'));
+       if(m.autor==='pesquisadora'){
+         const editar=btn('Editar mensagem',()=>{
+           const campoEd=el('textarea');campoEd.maxLength=12000;campoEd.value=m.texto;
+           const statusEd=el('p','','status');
+           const salvarEd=btn('Salvar alteração',async()=>{
+             const novo=campoEd.value.trim();if(!novo){statusEd.textContent='A mensagem não pode ficar vazia.';return;}
+             salvarEd.disabled=true;statusEd.textContent='Salvando alteração…';
+             try{
+               const salvo=await editarOrientacao(m.id,novo);
+               const idx=msgs.findIndex(x=>x.id===salvo.id);if(idx>=0)msgs[idx]=salvo;
+               desenhar();
+             }catch(e){statusEd.textContent='Não foi possível salvar a alteração agora.';}
+             finally{salvarEd.disabled=false;}
+           });
+           const cancelar=btn('Cancelar',desenhar,true);
+           bloco.replaceChildren(el('p','Editar mensagem para Silvia','muted'),campoEd,add(el('div',undefined,'actions'),salvarEd,cancelar),statusEd);
+         },true);
+         bloco.append(editar);
+       }
+       box.append(bloco);
+     }
      const label=el('label','Responder / escrever para Silvia'),campo=el('textarea'),status=el('p','','status'),b=btn('Enviar resposta',async()=>{const texto=campo.value.trim();if(!texto){status.textContent='Escreva a mensagem antes de enviar.';return;}const salvo=await responderOrientacao(texto);msgs.push(salvo);desenhar();});
      campo.maxLength=12000;campo.placeholder='Escreva aqui sua resposta ou anotação para a orientadora.';add(box,label,campo,b,status);
    };desenhar();
