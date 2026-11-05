@@ -2,7 +2,14 @@
 function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,navegar,sair}){
  document.body.classList.add('dashboard');const root=document.getElementById('app');root.replaceChildren();
  const nav=document.createElement('nav');nav.className='sidebar';nav.setAttribute('aria-label','Encontros');
- const add=(id,titulo,sub,target=nav)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}b.onclick=()=>navegar(id);target.append(b);return b;};
+ const paginas=[];
+ const abrirPagina=id=>{
+   if(id===selecionado)return;
+   const resultado=navegar(id);
+   if(resultado===false)return;
+   requestAnimationFrame(()=>document.querySelector('.workspace')?.scrollIntoView({behavior:'auto',block:'start'}));
+ };
+ const add=(id,titulo,sub,target=nav)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}b.onclick=()=>abrirPagina(id);target.append(b);paginas.push({id,titulo});return b;};
  add('inicio','Início','Por Escrito');
  const perfis=document.createElement('div');perfis.className='nav-profile-pair';nav.append(perfis);
  add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira',perfis);
@@ -14,7 +21,26 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
  );
  if(pesquisadora){add('novidades','Novidades','Movimentações recentes');add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
  if(orientadora)add('orientacao','Orientação','Canal privado com Nanny');
- const content=document.createElement('section');content.className='workspace';const identity=document.createElement('div');identity.className='identity';const n=document.createElement('span');n.textContent=(pesquisadora?'Pesquisadora · ':orientadora?'Orientadora · ':observadora?'Observadora · ':'Meu percurso · ')+nome;const out=document.createElement('button');out.className='secondary';out.textContent='Sair';out.onclick=sair;identity.append(n,out);content.append(identity);const panel=document.createElement('div');panel.id='conteudo';content.append(panel);root.append(nav,content);return panel;
+ const content=document.createElement('section');content.className='workspace';const identity=document.createElement('div');identity.className='identity';const n=document.createElement('span');n.textContent=(pesquisadora?'Pesquisadora · ':orientadora?'Orientadora · ':observadora?'Observadora · ':'Meu percurso · ')+nome;const out=document.createElement('button');out.className='secondary';out.textContent='Sair';out.onclick=sair;identity.append(n,out);content.append(identity);const panel=document.createElement('div');panel.id='conteudo';const montarAcoes=posicao=>{
+   const barra=document.createElement('nav');
+   barra.className='percurso-acoes percurso-acoes-'+posicao;
+   barra.setAttribute('aria-label','Voltar ou seguir no percurso');
+   const indice=paginas.findIndex(p=>p.id===selecionado);
+   if(indice<0)return barra;
+   const anterior=paginas[indice-1];
+   const proxima=paginas[indice+1];
+   const criarBotao=(rotulo,id,secundario)=>{
+     const b=document.createElement('button');
+     b.type='button';b.className=secundario?'secondary percurso-voltar':'percurso-seguir';
+     b.textContent=rotulo;b.onclick=()=>abrirPagina(id);return b;
+   };
+   if(anterior)barra.append(criarBotao('← Voltar · '+anterior.titulo,anterior.id,true));
+   if(proxima)barra.append(criarBotao('Seguir · '+proxima.titulo+' →',proxima.id,false));
+   else if(indice>0)barra.append(criarBotao('Ir para o início →','inicio',false));
+   return barra;
+ };
+ content.append(montarAcoes('topo'),panel,montarAcoes('final'));
+ root.append(nav,content);return panel;
 }
 function chaveDoAcesso(valor){const text=valor.trim();try{const u=new URL(text);if(u.protocol==='https:'||u.protocol==='http:'){const h=new URLSearchParams(u.hash.slice(1));return (u.searchParams.get('token')||h.get('token')||h.get('chave')||'').trim();}}catch{}return text;}
 function montarAberturaPorEscrito(){
