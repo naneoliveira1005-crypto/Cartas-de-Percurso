@@ -1,3 +1,8 @@
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js?v=2', {scope:'./'}).catch(() => {});
+  });
+}
 'use strict';
 (() => {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
