@@ -484,17 +484,58 @@ h1,h2,h3,h4{
   .pwa-install-button{right:12px;bottom:12px;padding:10px 14px;font-size:13px}
 }
 
-/* Navegação de leitura e escrita: voltar ou seguir sem retornar ao início */
+/* Navegação discreta, com alvos confortáveis para toque no celular */
 .dashboard .percurso-acoes{
- display:flex;gap:10px;align-items:stretch;justify-content:space-between;flex-wrap:wrap;
- padding:13px 0;margin:7px 0 17px;border-bottom:1px solid var(--line);
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ flex-wrap:nowrap;
+ gap:12px;
+ margin:5px 0 14px;
+ padding:5px 0;
+ border:0;
 }
-.dashboard .percurso-acoes-final{margin:24px 0 0;padding:17px 0;border-top:1px solid var(--line);border-bottom:0}
-.dashboard .percurso-acoes button{max-width:100%;flex:1 1 190px;white-space:normal;text-align:center;font-size:14px;min-height:46px;padding:10px 14px}
-.dashboard .percurso-acoes .percurso-voltar{border-color:#a7ae9e}
-.dashboard .percurso-acoes .percurso-seguir{background:var(--green);color:#fff}
+.dashboard .percurso-acoes-final{
+ margin:23px 0 0;
+ padding:13px 0 5px;
+ border-top:1px solid var(--line);
+ border-bottom:0;
+}
+.dashboard .percurso-acoes button,
+.dashboard .percurso-acoes button.secondary{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ flex:0 0 auto;
+ width:auto;
+ max-width:47%;
+ min-width:76px;
+ min-height:44px;
+ padding:8px 10px;
+ border:0;
+ border-radius:6px;
+ box-shadow:none;
+ background:transparent;
+ color:#596b5e;
+ font:500 13px/1.35 Arial,sans-serif;
+ text-align:center;
+ white-space:normal;
+}
+.dashboard .percurso-acoes .percurso-seguir{
+ margin-left:auto;
+ color:#355a4b;
+}
+.dashboard .percurso-acoes button:hover{
+ background:rgba(23,61,52,.055);
+ filter:none;
+}
+.dashboard .percurso-acoes button:focus-visible{
+ outline:2px solid var(--gold);
+ outline-offset:2px;
+}
 @media(max-width:800px){
- .dashboard .percurso-acoes{margin:8px 0 16px;padding:10px 0;flex-wrap:nowrap;gap:8px}
- .dashboard .percurso-acoes button{flex:1 1 0;min-width:0;font-size:12px;padding:10px 8px;line-height:1.35}
- .dashboard .percurso-acoes-final{margin:20px 0 0;padding:15px 0}
+ .dashboard .percurso-acoes{margin:3px 0 12px;gap:8px;padding:2px 0}
+ .dashboard .percurso-acoes button,
+ .dashboard .percurso-acoes button.secondary{min-width:76px;min-height:44px;padding:8px 7px;font-size:13px}
+ .dashboard .percurso-acoes-final{margin:18px 0 0;padding:10px 0 4px}
 }
