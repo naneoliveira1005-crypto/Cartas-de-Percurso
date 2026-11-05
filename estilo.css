@@ -483,3 +483,18 @@ h1,h2,h3,h4{
 @media(max-width:640px){
   .pwa-install-button{right:12px;bottom:12px;padding:10px 14px;font-size:13px}
 }
+
+/* Navegação de leitura e escrita: voltar ou seguir sem retornar ao início */
+.dashboard .percurso-acoes{
+ display:flex;gap:10px;align-items:stretch;justify-content:space-between;flex-wrap:wrap;
+ padding:13px 0;margin:7px 0 17px;border-bottom:1px solid var(--line);
+}
+.dashboard .percurso-acoes-final{margin:24px 0 0;padding:17px 0;border-top:1px solid var(--line);border-bottom:0}
+.dashboard .percurso-acoes button{max-width:100%;flex:1 1 190px;white-space:normal;text-align:center;font-size:14px;min-height:46px;padding:10px 14px}
+.dashboard .percurso-acoes .percurso-voltar{border-color:#a7ae9e}
+.dashboard .percurso-acoes .percurso-seguir{background:var(--green);color:#fff}
+@media(max-width:800px){
+ .dashboard .percurso-acoes{margin:8px 0 16px;padding:10px 0;flex-wrap:nowrap;gap:8px}
+ .dashboard .percurso-acoes button{flex:1 1 0;min-width:0;font-size:12px;padding:10px 8px;line-height:1.35}
+ .dashboard .percurso-acoes-final{margin:20px 0 0;padding:15px 0}
+}
