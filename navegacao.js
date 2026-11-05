@@ -32,11 +32,11 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
    const criarBotao=(rotulo,id,secundario)=>{
      const b=document.createElement('button');
      b.type='button';b.className=secundario?'secondary percurso-voltar':'percurso-seguir';
-     b.textContent=rotulo;b.onclick=()=>abrirPagina(id);return b;
+     b.textContent=rotulo;b.title=(secundario?'Voltar para ':'Seguir para ')+(paginas.find(p=>p.id===id)?.titulo||'Início');b.setAttribute('aria-label',b.title);b.onclick=()=>abrirPagina(id);return b;
    };
-   if(anterior)barra.append(criarBotao('← Voltar · '+anterior.titulo,anterior.id,true));
-   if(proxima)barra.append(criarBotao('Seguir · '+proxima.titulo+' →',proxima.id,false));
-   else if(indice>0)barra.append(criarBotao('Ir para o início →','inicio',false));
+   if(anterior)barra.append(criarBotao('← Voltar',anterior.id,true));
+   if(proxima)barra.append(criarBotao('Seguir →',proxima.id,false));
+   else if(indice>0)barra.append(criarBotao('Início →','inicio',false));
    return barra;
  };
  content.append(montarAcoes('topo'),panel,montarAcoes('final'));
