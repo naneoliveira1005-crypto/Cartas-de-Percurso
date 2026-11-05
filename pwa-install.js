@@ -1,6 +1,6 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js?v=2', {scope:'./'}).catch(() => {});
+    navigator.serviceWorker.register('./service-worker.js?v=3', {scope:'./'}).catch(() => {});
   });
 }
 'use strict';
