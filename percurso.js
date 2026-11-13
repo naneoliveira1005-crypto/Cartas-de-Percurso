@@ -135,7 +135,7 @@ async function abrirPerfil(){
 }
 
 function e2EscritaBloqueada(){
- return Date.now()<new Date('2026-11-13T00:00:00-03:00').getTime();
+ return false; // E2 liberado para escrita em 12/11/2026 às 22h30 (Bahia).
 }
 function abrirE2SomenteLeitura(m,r=null){
  encontroAtual='e2';montarParticipante();
