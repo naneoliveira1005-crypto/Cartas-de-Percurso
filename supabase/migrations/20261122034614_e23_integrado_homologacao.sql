@@ -1,0 +1,415 @@
+-- Extensão aditiva do Por Escrito. Nenhuma tabela ou função anterior é substituída.
+-- Projeto: zpsjuxusydfbptjotyxo. Sessões de homologação separadas das produções reais.
+CREATE TABLE private.e23_sessions (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), title text NOT NULL,
+ is_test boolean NOT NULL DEFAULT true, published boolean NOT NULL DEFAULT false,
+ group_count int CHECK(group_count IN (3,4)), durations int[] CHECK(array_length(durations,1)=6),
+ stage int NOT NULL DEFAULT 0 CHECK(stage BETWEEN 0 AND 7),
+ state text NOT NULL DEFAULT 'preparacao' CHECK(state IN ('preparacao','em_curso','pausado','plenario')),
+ started_at timestamptz, paused_at timestamptz, extra_seconds int NOT NULL DEFAULT 0 CHECK(extra_seconds>=0),
+ revision int NOT NULL DEFAULT 1, created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE private.e23_test_access (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ token_hash text NOT NULL UNIQUE, label text NOT NULL CHECK(label LIKE 'TESTE%'),
+ role text NOT NULL CHECK(role IN ('pesquisadora','participante','observadora','orientadora')),
+ active boolean NOT NULL DEFAULT true, expires_at timestamptz NOT NULL DEFAULT clock_timestamp()+interval '14 days'
+);
+CREATE TABLE private.e23_members (
+ session_id uuid NOT NULL REFERENCES private.e23_sessions(id), actor_id uuid NOT NULL,
+ group_no int NOT NULL CHECK(group_no BETWEEN 1 AND 4), PRIMARY KEY(session_id,actor_id)
+);
+CREATE INDEX e23_members_group ON private.e23_members(session_id,group_no);
+CREATE TABLE private.e23_writers (
+ session_id uuid NOT NULL REFERENCES private.e23_sessions(id), group_no int NOT NULL,
+ actor_id uuid NOT NULL, device text NOT NULL, expires_at timestamptz NOT NULL,
+ PRIMARY KEY(session_id,group_no)
+);
+CREATE TABLE private.e23_experiences (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ owner_id uuid NOT NULL, original_text text NOT NULL DEFAULT '', transcription text NOT NULL DEFAULT '',
+ circulation_title text NOT NULL DEFAULT '', circulation_text text NOT NULL DEFAULT '',
+ approved boolean NOT NULL DEFAULT false, authorization_note text NOT NULL DEFAULT '',
+ revision int NOT NULL DEFAULT 1, created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ CHECK(NOT approved OR (length(trim(circulation_text))>0 AND length(trim(authorization_note))>0))
+);
+CREATE INDEX e23_experiences_session ON private.e23_experiences(session_id);
+CREATE TABLE private.e23_materials (
+ session_id uuid NOT NULL REFERENCES private.e23_sessions(id), code text NOT NULL CHECK(code IN ('A','B','C')),
+ title text NOT NULL, status text NOT NULL DEFAULT 'pendente' CHECK(status IN ('pendente','conferido')),
+ note text NOT NULL DEFAULT '', revision int NOT NULL DEFAULT 1,
+ PRIMARY KEY(session_id,code)
+);
+CREATE TABLE private.e23_files (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ experience_id uuid REFERENCES private.e23_experiences(id), material_code text,
+ kind text NOT NULL CHECK(kind IN ('audio','transcricao','material','completo')),
+ path text NOT NULL UNIQUE, name text NOT NULL, mime text NOT NULL, bytes int NOT NULL CHECK(bytes BETWEEN 1 AND 26214400),
+ sha256 text, created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ CHECK((experience_id IS NOT NULL AND material_code IS NULL AND kind IN ('audio','transcricao')) OR
+       (experience_id IS NULL AND material_code IN ('A','B','C') AND kind IN ('material','completo')))
+);
+CREATE TABLE private.e23_records (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ origin_group int NOT NULL, author_group int NOT NULL, stage int NOT NULL CHECK(stage BETWEEN 1 AND 6),
+ payload jsonb NOT NULL DEFAULT '{}', revision int NOT NULL DEFAULT 0,
+ submitted boolean NOT NULL DEFAULT false, submitted_at timestamptz,
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp(), UNIQUE(session_id,author_group,stage)
+);
+CREATE TABLE private.e23_versions (
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ record_id uuid, entity text NOT NULL, entity_id text, origin_group int, author_group int, stage int,
+ revision int NOT NULL, payload jsonb NOT NULL, actor_id uuid, created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX e23_versions_session ON private.e23_versions(session_id,created_at);
+CREATE TABLE private.e23_deliveries (
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ group_no int NOT NULL, stage int NOT NULL, record_id uuid, revision int NOT NULL DEFAULT 0,
+ status text NOT NULL CHECK(status IN ('entregue','prazo_encerrado','reaberto')),
+ at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE private.e23_events (
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, session_id uuid REFERENCES private.e23_sessions(id),
+ actor_id uuid, type text NOT NULL, detail jsonb NOT NULL DEFAULT '{}', at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE private.e23_recoveries (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES private.e23_sessions(id),
+ actor_id uuid NOT NULL, group_no int NOT NULL, stage int NOT NULL, payload jsonb NOT NULL,
+ client_id uuid NOT NULL UNIQUE, created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE private.e23_letters_test (
+ session_id uuid NOT NULL REFERENCES private.e23_sessions(id), actor_id uuid NOT NULL,
+ text text NOT NULL DEFAULT '', revision int NOT NULL DEFAULT 0, sealed_at timestamptz,
+ PRIMARY KEY(session_id,actor_id)
+);
+DO $block$ DECLARE t text; BEGIN
+ FOR t IN SELECT tablename FROM pg_tables WHERE schemaname='private' AND tablename LIKE 'e23_%' LOOP
+  EXECUTE format('ALTER TABLE private.%I ENABLE ROW LEVEL SECURITY',t);
+  EXECUTE format('REVOKE ALL ON private.%I FROM PUBLIC,anon,authenticated',t);
+ END LOOP;
+END $block$;
+
+-- O sistema existente usa links secretos com hash, não sessões Supabase Auth.
+-- Todas as operações revalidam esses acessos. Não há elevação de OBS/ORI.
+CREATE FUNCTION private.e23_identify(p_token text) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $f$
+DECLARE a private.e23_test_access; p public.participantes; admin_id uuid;
+BEGIN
+ IF p_token IS NULL OR length(trim(p_token))<24 OR length(p_token)>256 THEN RAISE EXCEPTION 'ACESSO_INVALIDO'; END IF;
+ SELECT * INTO a FROM private.e23_test_access WHERE active AND expires_at>clock_timestamp()
+  AND token_hash=encode(extensions.digest(trim(p_token),'sha256'),'hex');
+ IF FOUND THEN RETURN jsonb_build_object('id',a.id,'role',a.role,'name',a.label,'is_test',true,'session_id',a.session_id); END IF;
+ SELECT id INTO admin_id FROM public.pesquisadora_acessos WHERE ativa AND chave_hash=encode(extensions.digest(trim(p_token),'sha256'),'hex');
+ IF FOUND THEN RETURN jsonb_build_object('id',admin_id,'role','pesquisadora','name','Nanny Oliveira','is_test',false); END IF;
+ SELECT * INTO p FROM public.participantes WHERE participacao_confirmada
+  AND (token_expira_em IS NULL OR token_expira_em>clock_timestamp())
+  AND token_hash=encode(extensions.digest(trim(p_token),'sha256'),'hex');
+ IF NOT FOUND THEN RAISE EXCEPTION 'ACESSO_INVALIDO'; END IF;
+ RETURN jsonb_build_object('id',p.id,'name',p.nome_completo,'is_test',false,'role',
+  CASE WHEN p.codigo LIKE 'OBS%' THEN 'observadora' WHEN p.codigo LIKE 'ORI%' THEN 'orientadora' ELSE 'participante' END);
+END $f$;
+
+CREATE FUNCTION private.e23_tick(p_session uuid,p_now timestamptz DEFAULT clock_timestamp()) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $f$
+DECLARE s private.e23_sessions; finish timestamptz;
+BEGIN
+ SELECT * INTO s FROM private.e23_sessions WHERE id=p_session FOR UPDATE;
+ WHILE s.state='em_curso' AND s.stage BETWEEN 1 AND 6 LOOP
+  finish:=s.started_at+make_interval(secs=>s.durations[s.stage]+s.extra_seconds+120);
+  EXIT WHEN p_now<finish;
+  INSERT INTO private.e23_deliveries(session_id,group_no,stage,record_id,revision,status,at)
+   SELECT s.id,g,s.stage,r.id,coalesce(r.revision,0),'prazo_encerrado',finish
+    FROM generate_series(1,s.group_count) g LEFT JOIN private.e23_records r
+    ON r.session_id=s.id AND r.author_group=g AND r.stage=s.stage WHERE NOT coalesce(r.submitted,false);
+  INSERT INTO private.e23_events(session_id,type,detail,at)
+   VALUES(s.id,'transicao_automatica',jsonb_build_object('de',s.stage,'para',s.stage+1),finish);
+  UPDATE private.e23_sessions SET stage=stage+1,started_at=finish,extra_seconds=0,
+   state=CASE WHEN stage=6 THEN 'plenario' ELSE 'em_curso' END,revision=revision+1
+   WHERE id=s.id RETURNING * INTO s;
+ END LOOP;
+END $f$;
+
+CREATE FUNCTION private.e23_snapshot(p_session uuid,p_actor jsonb) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $f$
+DECLARE s private.e23_sessions; g int; role_name text:=p_actor->>'role'; aid uuid:=(p_actor->>'id')::uuid; is_admin boolean:=role_name='pesquisadora'; result jsonb;
+BEGIN
+ SELECT * INTO s FROM private.e23_sessions WHERE id=p_session;
+ SELECT group_no INTO g FROM private.e23_members WHERE session_id=s.id AND actor_id=aid;
+ result:=jsonb_build_object('session',to_jsonb(s),'actor',p_actor,'group',g,'server_now',clock_timestamp(),'grace_seconds',120);
+ -- Observadoras e orientadora conservam acesso à estrutura; novas produções não são liberadas implicitamente.
+ IF role_name IN ('observadora','orientadora') THEN RETURN result||jsonb_build_object('read_only',true); END IF;
+ result:=result||jsonb_build_object(
+  'experiences',coalesce((SELECT jsonb_agg(jsonb_build_object('id',e.id,'title',e.circulation_title,'text',e.circulation_text,'revision',e.revision) ORDER BY e.created_at)
+    FROM private.e23_experiences e WHERE e.session_id=s.id AND e.approved),'[]'::jsonb),
+  'materials',coalesce((SELECT jsonb_agg(to_jsonb(m) ORDER BY code) FROM private.e23_materials m WHERE m.session_id=s.id),'[]'::jsonb),
+  'records',coalesce((SELECT jsonb_agg(to_jsonb(r) ORDER BY origin_group,stage) FROM private.e23_records r WHERE r.session_id=s.id AND
+    (is_admin OR r.author_group=g OR (s.stage>=3 AND r.origin_group=(g%s.group_count)+1) OR (s.stage>=6 AND r.origin_group=g))),'[]'::jsonb),
+  'writer',(SELECT jsonb_build_object('mine',w.actor_id=aid,'device',CASE WHEN w.actor_id=aid THEN w.device ELSE NULL END,'expires_at',w.expires_at)
+    FROM private.e23_writers w WHERE w.session_id=s.id AND w.group_no=g),
+  'files',coalesce((SELECT jsonb_agg(to_jsonb(f)-'path'-'sha256') FROM private.e23_files f WHERE f.session_id=s.id AND
+    (is_admin OR f.material_code IS NOT NULL OR EXISTS(SELECT 1 FROM private.e23_experiences e WHERE e.id=f.experience_id AND e.owner_id=aid))),'[]'::jsonb));
+ IF is_admin THEN
+  result:=result||jsonb_build_object(
+   'private_experiences',coalesce((SELECT jsonb_agg(to_jsonb(e) ORDER BY created_at) FROM private.e23_experiences e WHERE e.session_id=s.id),'[]'::jsonb),
+   'members',coalesce((SELECT jsonb_agg(to_jsonb(m)) FROM private.e23_members m WHERE m.session_id=s.id),'[]'::jsonb),
+   'people',CASE WHEN s.is_test THEN coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'name',label,'role',role)) FROM private.e23_test_access WHERE session_id=s.id AND active),'[]'::jsonb)
+    ELSE coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'name',nome_completo,'role',CASE WHEN codigo LIKE 'OBS%' THEN 'observadora' WHEN codigo LIKE 'ORI%' THEN 'orientadora' ELSE 'participante' END)) FROM public.participantes WHERE participacao_confirmada),'[]'::jsonb) END,
+   'deliveries',coalesce((SELECT jsonb_agg(to_jsonb(d) ORDER BY at) FROM private.e23_deliveries d WHERE d.session_id=s.id),'[]'::jsonb),
+   'events',coalesce((SELECT jsonb_agg(to_jsonb(v) ORDER BY id DESC) FROM (SELECT * FROM private.e23_events WHERE session_id=s.id ORDER BY id DESC LIMIT 100) v),'[]'::jsonb),
+   'recoveries',coalesce((SELECT jsonb_agg(to_jsonb(r)) FROM private.e23_recoveries r WHERE r.session_id=s.id),'[]'::jsonb));
+ ELSE
+  result:=result||jsonb_build_object('my_experiences',coalesce((SELECT jsonb_agg(to_jsonb(e)) FROM private.e23_experiences e WHERE e.session_id=s.id AND e.owner_id=aid),'[]'::jsonb));
+ END IF;
+ RETURN result;
+END $f$;
+
+REVOKE ALL ON FUNCTION private.e23_identify(text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION private.e23_tick(uuid,timestamptz) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION private.e23_snapshot(uuid,jsonb) FROM PUBLIC,anon,authenticated;
+CREATE FUNCTION private.e23_api(p_token text,p_action text DEFAULT 'sessions',p_payload jsonb DEFAULT '{}') RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $f$
+DECLARE a jsonb:=private.e23_identify(p_token); aid uuid:=(a->>'id')::uuid;
+ admin boolean:=a->>'role'='pesquisadora'; test_actor boolean:=(a->>'is_test')::boolean;
+ sid uuid; s private.e23_sessions; g int; orig int; st int; r private.e23_records;
+ e private.e23_experiences; f private.e23_files; letter private.e23_letters_test;
+ v jsonb; payload jsonb; exp_id uuid; rev int; target uuid; d int[]; finish timestamptz; key text; value jsonb;
+ submitted boolean:=coalesce((p_payload->>'submit')::boolean,false); now_at timestamptz:=clock_timestamp();
+BEGIN
+ IF jsonb_typeof(p_payload)<>'object' OR octet_length(p_payload::text)>400000 THEN RAISE EXCEPTION 'PEDIDO_INVALIDO'; END IF;
+ IF p_action='sessions' THEN
+  RETURN jsonb_build_object('actor',a,'server_now',clock_timestamp(),'sessions',coalesce((SELECT jsonb_agg(to_jsonb(z) ORDER BY created_at DESC)
+   FROM private.e23_sessions z WHERE
+   (test_actor AND z.id=(a->>'session_id')::uuid) OR
+   (NOT test_actor AND (admin OR (z.published AND NOT z.is_test)))),'[]'::jsonb));
+ END IF;
+ IF p_action='create_session' THEN
+  IF NOT admin OR test_actor THEN RAISE EXCEPTION 'ACESSO_NEGADO'; END IF;
+  INSERT INTO private.e23_sessions(title,is_test) VALUES(left(coalesce(p_payload->>'title','Encontro E2–E3'),160),coalesce((p_payload->>'is_test')::boolean,true)) RETURNING id INTO sid;
+  INSERT INTO private.e23_materials(session_id,code,title) VALUES(sid,'A','Planejamento semanal do Grupo 5'),(sid,'B','A Casa Sonolenta — 2º ano'),(sid,'C','Resultados do CNCA — Ciclo II');
+  RETURN jsonb_build_object('id',sid);
+ END IF;
+ sid:=(p_payload->>'session_id')::uuid;
+ SELECT * INTO s FROM private.e23_sessions WHERE id=sid FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'ENCONTRO_INDISPONIVEL'; END IF;
+ IF test_actor AND (a->>'session_id')::uuid<>sid THEN RAISE EXCEPTION 'ACESSO_NEGADO'; END IF;
+ IF NOT test_actor AND NOT admin AND (s.is_test OR NOT s.published) THEN RAISE EXCEPTION 'ENCONTRO_NAO_LIBERADO'; END IF;
+ IF a->>'role' IN ('observadora','orientadora') AND p_action<>'load' THEN RAISE EXCEPTION 'SOMENTE_LEITURA'; END IF;
+ PERFORM private.e23_tick(sid);
+ SELECT * INTO s FROM private.e23_sessions WHERE id=sid;
+ SELECT group_no INTO g FROM private.e23_members WHERE session_id=sid AND actor_id=aid;
+ IF p_action='load' THEN
+  UPDATE private.e23_writers SET expires_at=clock_timestamp()+interval '35 seconds'
+   WHERE session_id=sid AND actor_id=aid AND device=p_payload->>'device' AND expires_at>clock_timestamp();
+  RETURN private.e23_snapshot(sid,a);
+ END IF;
+
+ IF p_action IN ('configure','member','experience','material','start','pause','resume','extend','advance','publish','recover','note','export','file_prepare','file_register','writer_release') THEN
+  IF NOT admin THEN RAISE EXCEPTION 'ACESSO_NEGADO'; END IF;
+  IF p_action='configure' THEN
+   IF s.stage<>0 THEN RAISE EXCEPTION 'ENCONTRO_JA_INICIADO'; END IF;
+   g:=(p_payload->>'group_count')::int;
+   IF g NOT IN (3,4) OR g IS NULL THEN RAISE EXCEPTION 'CONFIGURE_GRUPOS'; END IF;
+   IF EXISTS(SELECT 1 FROM private.e23_members WHERE session_id=sid AND group_no>g) THEN RAISE EXCEPTION 'REORGANIZE_GRUPOS'; END IF;
+   SELECT array_agg(CASE WHEN x='null'::jsonb THEN NULL ELSE (x::text)::int END ORDER BY n) INTO d FROM jsonb_array_elements(p_payload->'durations') WITH ORDINALITY t(x,n);
+   IF array_length(d,1)<>6 OR EXISTS(SELECT 1 FROM unnest(d) t WHERE t IS NOT NULL AND (t<1 OR t>14400)) THEN RAISE EXCEPTION 'TEMPOS_INVALIDOS'; END IF;
+   UPDATE private.e23_sessions SET group_count=g,durations=d,revision=revision+1 WHERE id=sid;
+  ELSIF p_action='member' THEN
+   target:=(p_payload->>'actor_id')::uuid; g:=(p_payload->>'group_no')::int;
+   IF s.group_count IS NULL OR g<1 OR g>s.group_count OR g IS NULL THEN RAISE EXCEPTION 'GRUPO_INVALIDO'; END IF;
+   IF s.stage<>0 THEN RAISE EXCEPTION 'GRUPOS_JA_INICIADOS'; END IF;
+   IF s.is_test THEN
+    IF NOT EXISTS(SELECT 1 FROM private.e23_test_access WHERE id=target AND session_id=sid AND role='participante') THEN RAISE EXCEPTION 'PARTICIPANTE_INVALIDA'; END IF;
+   ELSE
+    IF NOT EXISTS(SELECT 1 FROM public.participantes WHERE id=target AND participacao_confirmada AND codigo NOT LIKE 'OBS%' AND codigo NOT LIKE 'ORI%' AND codigo NOT LIKE 'TESTE%') THEN RAISE EXCEPTION 'PARTICIPANTE_INVALIDA'; END IF;
+   END IF;
+   INSERT INTO private.e23_members VALUES(sid,target,g) ON CONFLICT(session_id,actor_id) DO UPDATE SET group_no=excluded.group_no;
+  ELSIF p_action='experience' THEN
+   exp_id:=nullif(p_payload->>'id','')::uuid; target:=(p_payload->>'owner_id')::uuid;
+   IF (s.is_test AND NOT EXISTS(SELECT 1 FROM private.e23_test_access WHERE id=target AND session_id=sid AND role='participante')) OR
+      (NOT s.is_test AND NOT EXISTS(SELECT 1 FROM public.participantes WHERE id=target AND codigo NOT LIKE 'OBS%' AND codigo NOT LIKE 'ORI%' AND codigo NOT LIKE 'TESTE%')) THEN RAISE EXCEPTION 'AUTORIA_INVALIDA'; END IF;
+   IF exp_id IS NOT NULL THEN
+    SELECT * INTO e FROM private.e23_experiences WHERE id=exp_id AND session_id=sid FOR UPDATE;
+    IF NOT FOUND OR e.revision<>coalesce((p_payload->>'revision')::int,0) THEN RAISE EXCEPTION 'CONFLITO_DE_VERSAO'; END IF;
+   ELSE
+    INSERT INTO private.e23_experiences(session_id,owner_id) VALUES(sid,target) RETURNING * INTO e;
+   END IF;
+   UPDATE private.e23_experiences SET owner_id=target,original_text=coalesce(p_payload->>'original_text',''),
+    transcription=coalesce(p_payload->>'transcription',''),circulation_title=left(coalesce(p_payload->>'title',''),200),
+    circulation_text=coalesce(p_payload->>'text',''),approved=coalesce((p_payload->>'approved')::boolean,false),
+    authorization_note=coalesce(p_payload->>'authorization_note',''),revision=revision+1,updated_at=now_at
+    WHERE id=e.id RETURNING * INTO e;
+   INSERT INTO private.e23_versions(session_id,entity,entity_id,revision,payload,actor_id)
+    VALUES(sid,'relato_individual',e.id::text,e.revision,to_jsonb(e),aid);
+  ELSIF p_action='material' THEN
+   IF p_payload->>'status'='conferido' AND NOT EXISTS(SELECT 1 FROM private.e23_files WHERE session_id=sid AND material_code=p_payload->>'code' AND kind='material') THEN RAISE EXCEPTION 'DOCUMENTO_ORIGINAL_PENDENTE'; END IF;
+   UPDATE private.e23_materials SET status=p_payload->>'status',note=coalesce(p_payload->>'note',''),revision=revision+1 WHERE session_id=sid AND code=p_payload->>'code';
+  ELSIF p_action='start' THEN
+   IF s.stage<>0 OR s.state<>'preparacao' THEN RAISE EXCEPTION 'ENCONTRO_JA_INICIADO'; END IF;
+   IF s.group_count IS NULL OR s.durations IS NULL OR array_position(s.durations,NULL) IS NOT NULL THEN RAISE EXCEPTION 'CONFIGURE_TEMPOS_E_GRUPOS'; END IF;
+   IF EXISTS(SELECT 1 FROM generate_series(1,s.group_count) n WHERE NOT EXISTS(SELECT 1 FROM private.e23_members WHERE session_id=sid AND group_no=n)) THEN RAISE EXCEPTION 'GRUPO_SEM_PARTICIPANTE'; END IF;
+   IF NOT s.is_test AND (NOT EXISTS(SELECT 1 FROM private.e23_experiences WHERE session_id=sid AND approved) OR
+      (SELECT count(*) FROM private.e23_materials WHERE session_id=sid AND status='conferido')<>3) THEN RAISE EXCEPTION 'PREPARACAO_PENDENTE'; END IF;
+   UPDATE private.e23_sessions SET stage=1,state='em_curso',started_at=now_at,revision=revision+1 WHERE id=sid;
+  ELSIF p_action='pause' THEN
+   IF s.state<>'em_curso' THEN RAISE EXCEPTION 'ESTADO_INVALIDO'; END IF;
+   UPDATE private.e23_sessions SET state='pausado',paused_at=now_at,revision=revision+1 WHERE id=sid;
+  ELSIF p_action='resume' THEN
+   IF s.state<>'pausado' THEN RAISE EXCEPTION 'ESTADO_INVALIDO'; END IF;
+   UPDATE private.e23_sessions SET state='em_curso',started_at=started_at+(now_at-paused_at),paused_at=NULL,revision=revision+1 WHERE id=sid;
+  ELSIF p_action='extend' THEN
+   st:=(p_payload->>'seconds')::int;
+   IF st IS NULL OR st<1 OR st>14400 OR s.state NOT IN ('em_curso','pausado') THEN RAISE EXCEPTION 'PRORROGACAO_INVALIDA'; END IF;
+   UPDATE private.e23_sessions SET extra_seconds=extra_seconds+st,revision=revision+1 WHERE id=sid;
+  ELSIF p_action='advance' THEN
+   IF s.stage NOT BETWEEN 1 AND 6 THEN RAISE EXCEPTION 'ESTADO_INVALIDO'; END IF;
+   INSERT INTO private.e23_deliveries(session_id,group_no,stage,record_id,revision,status,at)
+    SELECT sid,n,s.stage,r.id,coalesce(r.revision,0),'prazo_encerrado',now_at FROM generate_series(1,s.group_count) n
+    LEFT JOIN private.e23_records r ON r.session_id=sid AND r.author_group=n AND r.stage=s.stage WHERE NOT coalesce(r.submitted,false);
+   UPDATE private.e23_sessions SET stage=stage+1,state=CASE WHEN stage=6 THEN 'plenario' ELSE 'em_curso' END,
+    started_at=now_at,paused_at=NULL,extra_seconds=0,revision=revision+1 WHERE id=sid;
+  ELSIF p_action='publish' THEN
+   IF test_actor OR s.is_test THEN RAISE EXCEPTION 'HOMOLOGACAO_NAO_PUBLICAVEL'; END IF;
+   UPDATE private.e23_sessions SET published=coalesce((p_payload->>'published')::boolean,false),revision=revision+1 WHERE id=sid;
+  ELSIF p_action='writer_release' THEN
+   UPDATE private.e23_writers SET expires_at=now_at WHERE session_id=sid AND group_no=(p_payload->>'group_no')::int;
+  ELSIF p_action='recover' THEN
+   SELECT to_jsonb(x) INTO v FROM private.e23_recoveries x WHERE x.id=(p_payload->>'recovery_id')::uuid AND session_id=sid;
+   IF v IS NULL THEN RAISE EXCEPTION 'RECUPERACAO_INVALIDA'; END IF;
+   g:=(v->>'group_no')::int; st:=(v->>'stage')::int;
+   orig:=CASE WHEN st BETWEEN 3 AND 5 THEN (g%s.group_count)+1 ELSE g END;
+   INSERT INTO private.e23_records(session_id,origin_group,author_group,stage,payload,revision)
+    VALUES(sid,orig,g,st,v->'payload',1)
+    ON CONFLICT(session_id,author_group,stage) DO UPDATE SET payload=excluded.payload,revision=private.e23_records.revision+1,updated_at=now_at RETURNING * INTO r;
+   INSERT INTO private.e23_versions(session_id,record_id,entity,entity_id,origin_group,author_group,stage,revision,payload,actor_id)
+    VALUES(sid,r.id,'recuperacao_pela_pesquisadora',r.id::text,orig,g,st,r.revision,r.payload,aid);
+  ELSIF p_action='note' THEN
+   INSERT INTO private.e23_events(session_id,actor_id,type,detail) VALUES(sid,aid,'registro_pesquisadora',jsonb_build_object('text',left(p_payload->>'text',20000)));
+  ELSIF p_action='export' THEN
+   v:=jsonb_build_object('format','por-escrito-e23-v1','exported_at',now_at,'session',to_jsonb(s),
+    'records',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_records x WHERE session_id=sid),'[]'::jsonb),
+    'versions',coalesce((SELECT jsonb_agg(to_jsonb(x)-'actor_id') FROM private.e23_versions x WHERE session_id=sid AND entity NOT IN ('relato_individual','carta_teste')),'[]'::jsonb),
+    'deliveries',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_deliveries x WHERE session_id=sid),'[]'::jsonb),
+    'materials',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_materials x WHERE session_id=sid),'[]'::jsonb));
+   IF coalesce((p_payload->>'include_private')::boolean,false) THEN
+    v:=v||jsonb_build_object('confidential',true,
+     'originals',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_experiences x WHERE session_id=sid),'[]'::jsonb),
+     'private_versions',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_versions x WHERE session_id=sid AND entity IN ('relato_individual','carta_teste')),'[]'::jsonb),
+     'researcher_records',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_events x WHERE session_id=sid),'[]'::jsonb),
+     'recoveries',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM private.e23_recoveries x WHERE session_id=sid),'[]'::jsonb));
+   END IF;
+   RETURN v;
+  ELSIF p_action='file_prepare' THEN
+   exp_id:=nullif(p_payload->>'experience_id','')::uuid;
+   IF exp_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM private.e23_experiences WHERE id=exp_id AND session_id=sid) THEN RAISE EXCEPTION 'RELATO_INVALIDO'; END IF;
+   IF exp_id IS NULL AND NOT EXISTS(SELECT 1 FROM private.e23_materials WHERE session_id=sid AND code=p_payload->>'material_code') THEN RAISE EXCEPTION 'MATERIAL_INVALIDO'; END IF;
+   RETURN jsonb_build_object('bucket','por-escrito-e23','prefix',sid::text,'authorized',true);
+  ELSIF p_action='file_register' THEN
+   exp_id:=nullif(p_payload->>'experience_id','')::uuid;
+   IF exp_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM private.e23_experiences WHERE id=exp_id AND session_id=sid) THEN RAISE EXCEPTION 'RELATO_INVALIDO'; END IF;
+   IF p_payload->>'path' NOT LIKE sid::text||'/%' OR p_payload->>'path' LIKE '%..%' THEN RAISE EXCEPTION 'ARQUIVO_INVALIDO'; END IF;
+   -- Registro só é aceito após o objeto existir no bucket privado, criado pelo servidor.
+   IF NOT EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='por-escrito-e23' AND name=p_payload->>'path') THEN RAISE EXCEPTION 'ARQUIVO_NAO_RECEBIDO'; END IF;
+   INSERT INTO private.e23_files(session_id,experience_id,material_code,kind,path,name,mime,bytes,sha256)
+    VALUES(sid,exp_id,nullif(p_payload->>'material_code',''),p_payload->>'kind',p_payload->>'path',left(p_payload->>'name',180),p_payload->>'mime',(p_payload->>'bytes')::int,p_payload->>'sha256') RETURNING * INTO f;
+   RETURN jsonb_build_object('id',f.id);
+  END IF;
+  INSERT INTO private.e23_events(session_id,actor_id,type,detail) VALUES(sid,aid,p_action,jsonb_build_object('stage',s.stage));
+  RETURN private.e23_snapshot(sid,a);
+ END IF;
+
+ IF p_action='file_access' THEN
+  SELECT * INTO f FROM private.e23_files WHERE id=(p_payload->>'file_id')::uuid AND session_id=sid;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ARQUIVO_INDISPONIVEL'; END IF;
+  IF NOT admin AND NOT ((f.material_code IS NOT NULL AND EXISTS(SELECT 1 FROM private.e23_materials WHERE session_id=sid AND code=f.material_code AND status='conferido')) OR
+   EXISTS(SELECT 1 FROM private.e23_experiences WHERE id=f.experience_id AND owner_id=aid)) THEN RAISE EXCEPTION 'ACESSO_NEGADO'; END IF;
+  RETURN jsonb_build_object('bucket','por-escrito-e23','path',f.path,'name',f.name,'mime',f.mime);
+ END IF;
+ IF p_action='letter_load' OR p_action='letter_save' THEN
+  IF NOT test_actor OR a->>'role'<>'participante' THEN RAISE EXCEPTION 'USE_CARTA_EXISTENTE'; END IF;
+  SELECT * INTO letter FROM private.e23_letters_test WHERE session_id=sid AND actor_id=aid FOR UPDATE;
+  IF p_action='letter_save' THEN
+   IF letter.sealed_at IS NOT NULL THEN RAISE EXCEPTION 'CARTA_JA_LACRADA'; END IF;
+   IF coalesce(letter.revision,0)<>coalesce((p_payload->>'revision')::int,0) THEN RAISE EXCEPTION 'CONFLITO_DE_VERSAO'; END IF;
+   IF length(coalesce(p_payload->>'text',''))>60000 OR (submitted AND length(trim(coalesce(p_payload->>'text','')))=0) THEN RAISE EXCEPTION 'TEXTO_INVALIDO'; END IF;
+   INSERT INTO private.e23_letters_test(session_id,actor_id,text,revision,sealed_at)
+    VALUES(sid,aid,p_payload->>'text',1,CASE WHEN submitted THEN now_at END)
+    ON CONFLICT(session_id,actor_id) DO UPDATE SET text=excluded.text,revision=private.e23_letters_test.revision+1,sealed_at=excluded.sealed_at RETURNING * INTO letter;
+   INSERT INTO private.e23_versions(session_id,entity,entity_id,revision,payload,actor_id) VALUES(sid,'carta_teste',aid::text,letter.revision,to_jsonb(letter),aid);
+  END IF;
+  RETURN jsonb_build_object('letter',CASE WHEN letter.actor_id IS NULL THEN NULL ELSE to_jsonb(letter) END,'server_now',now_at);
+ END IF;
+ IF p_action='incident' THEN
+  INSERT INTO private.e23_events(session_id,actor_id,type,detail) VALUES(sid,aid,'ocorrencia_tecnica',jsonb_build_object('code',left(p_payload->>'code',80),'stage',s.stage));
+  RETURN jsonb_build_object('ok',true);
+ END IF;
+ IF a->>'role'<>'participante' OR g IS NULL THEN RAISE EXCEPTION 'GRUPO_NAO_DEFINIDO'; END IF;
+ IF p_action='claim_writer' THEN
+  IF length(coalesce(p_payload->>'device','')) NOT BETWEEN 20 AND 80 THEN RAISE EXCEPTION 'DISPOSITIVO_INVALIDO'; END IF;
+  INSERT INTO private.e23_writers(session_id,group_no,actor_id,device,expires_at) VALUES(sid,g,aid,p_payload->>'device',now_at+interval '35 seconds')
+   ON CONFLICT(session_id,group_no) DO UPDATE SET actor_id=excluded.actor_id,device=excluded.device,expires_at=excluded.expires_at
+   WHERE private.e23_writers.expires_at<=now_at OR (private.e23_writers.actor_id=aid AND private.e23_writers.device=excluded.device);
+  IF NOT FOUND THEN RAISE EXCEPTION 'OUTRA_PESSOA_ESCREVENDO'; END IF;
+  RETURN private.e23_snapshot(sid,a);
+ END IF;
+ IF p_action NOT IN ('save','reopen') THEN RAISE EXCEPTION 'ACAO_INVALIDA'; END IF;
+ st:=(p_payload->>'stage')::int;
+ IF st IS NULL OR st NOT BETWEEN 1 AND 6 THEN RAISE EXCEPTION 'ETAPA_INVALIDA'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM private.e23_writers WHERE session_id=sid AND group_no=g AND actor_id=aid AND device=p_payload->>'device' AND expires_at>now_at) THEN RAISE EXCEPTION 'ASSUMA_A_ESCRITA'; END IF;
+ orig:=CASE WHEN st BETWEEN 3 AND 5 THEN (g%s.group_count)+1 ELSE g END;
+ payload:=coalesce(p_payload->'payload','{}');
+ IF jsonb_typeof(payload)<>'object' OR octet_length(payload::text)>150000 THEN RAISE EXCEPTION 'TEXTO_INVALIDO'; END IF;
+ FOR key,value IN SELECT * FROM jsonb_each(payload) LOOP
+  IF key<>ALL(CASE st WHEN 1 THEN ARRAY['experience_id'] WHEN 2 THEN ARRAY['q1','q2','q3','q4','q5'] WHEN 3 THEN ARRAY['text'] WHEN 4 THEN ARRAY['material','q1','q2','q3'] WHEN 5 THEN ARRAY['text'] ELSE ARRAY['q1','q2'] END)
+    OR jsonb_typeof(value)<>'string' OR length(value::text)>30000 THEN RAISE EXCEPTION 'CAMPO_INVALIDO'; END IF;
+ END LOOP;
+ IF st=1 AND payload ? 'experience_id' THEN
+  SELECT * INTO e FROM private.e23_experiences WHERE id=(payload->>'experience_id')::uuid AND session_id=sid AND approved;
+  IF NOT FOUND THEN RAISE EXCEPTION 'EXPERIENCIA_NAO_AUTORIZADA'; END IF;
+  payload:=payload||jsonb_build_object('experience_snapshot',jsonb_build_object('id',e.id,'title',e.circulation_title,'text',e.circulation_text,'revision',e.revision));
+ END IF;
+ IF st=4 AND payload ? 'material' THEN
+  SELECT to_jsonb(m) INTO v FROM private.e23_materials m WHERE session_id=sid AND code=payload->>'material' AND status='conferido';
+  IF v IS NULL THEN RAISE EXCEPTION 'DOCUMENTO_ORIGINAL_PENDENTE'; END IF;
+  payload:=payload||jsonb_build_object('material_snapshot',v||jsonb_build_object('files',coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'sha256',sha256,'kind',kind)) FROM private.e23_files WHERE session_id=sid AND material_code=v->>'code'),'[]'::jsonb)));
+ END IF;
+ -- Retorno após desconexão nunca sobrescreve a produção fechada de uma etapa.
+ IF st<>s.stage OR s.state NOT IN ('em_curso','pausado') THEN
+  IF p_action='reopen' THEN RAISE EXCEPTION 'ETAPA_ENCERRADA'; END IF;
+  IF st>s.stage THEN RAISE EXCEPTION 'ETAPA_NAO_ABERTA'; END IF;
+  INSERT INTO private.e23_recoveries(session_id,actor_id,group_no,stage,payload,client_id)
+   VALUES(sid,aid,g,st,payload,(p_payload->>'client_id')::uuid) ON CONFLICT(client_id) DO NOTHING;
+  RETURN jsonb_build_object('recovered',true,'message','Registro preservado para recuperação pela pesquisadora.','server_now',now_at);
+ END IF;
+ SELECT * INTO r FROM private.e23_records WHERE session_id=sid AND author_group=g AND stage=st FOR UPDATE;
+ IF p_action='reopen' THEN
+  IF r.id IS NULL THEN RAISE EXCEPTION 'REGISTRO_INEXISTENTE'; END IF;
+  UPDATE private.e23_records SET submitted=false,submitted_at=NULL WHERE id=r.id;
+  INSERT INTO private.e23_deliveries(session_id,group_no,stage,record_id,revision,status) VALUES(sid,g,st,r.id,r.revision,'reaberto');
+  RETURN private.e23_snapshot(sid,a);
+ END IF;
+ IF r.id IS NOT NULL AND r.payload=payload AND r.submitted=submitted THEN RETURN private.e23_snapshot(sid,a); END IF;
+ IF r.submitted THEN RAISE EXCEPTION 'REGISTRO_ENTREGUE'; END IF;
+ IF coalesce(r.revision,0)<>coalesce((p_payload->>'revision')::int,0) THEN RAISE EXCEPTION 'CONFLITO_DE_VERSAO'; END IF;
+ IF submitted AND ((st=1 AND NOT payload ? 'experience_snapshot') OR (st=4 AND NOT payload ? 'material_snapshot') OR
+  (st<>1 AND EXISTS(SELECT 1 FROM unnest(CASE st WHEN 2 THEN ARRAY['q1','q2','q3','q4','q5'] WHEN 4 THEN ARRAY['q1','q2','q3'] WHEN 6 THEN ARRAY['q1','q2'] ELSE ARRAY['text'] END) k WHERE length(trim(coalesce(payload->>k,'')))=0))) THEN RAISE EXCEPTION 'REGISTRO_INCOMPLETO'; END IF;
+ INSERT INTO private.e23_records(session_id,origin_group,author_group,stage,payload,revision,submitted,submitted_at)
+  VALUES(sid,orig,g,st,payload,1,submitted,CASE WHEN submitted THEN now_at END)
+  ON CONFLICT(session_id,author_group,stage) DO UPDATE SET payload=excluded.payload,revision=private.e23_records.revision+1,
+   submitted=excluded.submitted,submitted_at=excluded.submitted_at,updated_at=now_at RETURNING * INTO r;
+ INSERT INTO private.e23_versions(session_id,record_id,entity,entity_id,origin_group,author_group,stage,revision,payload,actor_id)
+  VALUES(sid,r.id,CASE st WHEN 1 THEN 'escolha' WHEN 2 THEN 'primeiro_olhar' WHEN 3 THEN 'interlocucao' WHEN 4 THEN 'materialidade' WHEN 5 THEN 'articulacao' ELSE 'revisitacao' END,r.id::text,orig,g,st,r.revision,payload,aid);
+ IF submitted THEN INSERT INTO private.e23_deliveries(session_id,group_no,stage,record_id,revision,status) VALUES(sid,g,st,r.id,r.revision,'entregue'); END IF;
+ UPDATE private.e23_writers SET expires_at=now_at+interval '35 seconds' WHERE session_id=sid AND group_no=g;
+ RETURN private.e23_snapshot(sid,a);
+END $f$;
+REVOKE ALL ON FUNCTION private.e23_api(text,text,jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.e23_api(text,text,jsonb) TO anon,authenticated,service_role;
+CREATE FUNCTION public.e23_api(p_token text,p_action text DEFAULT 'sessions',p_payload jsonb DEFAULT '{}') RETURNS jsonb
+LANGUAGE sql SECURITY INVOKER SET search_path='' AS $f$ SELECT private.e23_api(p_token,p_action,p_payload); $f$;
+REVOKE ALL ON FUNCTION public.e23_api(text,text,jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.e23_api(text,text,jsonb) TO anon,authenticated,service_role;
+
+INSERT INTO storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
+VALUES('por-escrito-e23','por-escrito-e23',false,26214400,ARRAY['application/pdf','text/plain','audio/mpeg','audio/mp4','audio/ogg','audio/wav','audio/webm']);
+-- Sem políticas de leitura/escrita direta no bucket: apenas a função de arquivos autenticada.

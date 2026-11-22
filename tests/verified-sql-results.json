@@ -1,0 +1,107 @@
+{
+  "checked_at": "2026-11-22",
+  "original_tables": [
+    {
+      "tabela": "public.participantes",
+      "linhas": 29,
+      "linhas_backup": 29,
+      "identica": true
+    },
+    {
+      "tabela": "public.cartas",
+      "linhas": 1,
+      "linhas_backup": 1,
+      "identica": true
+    },
+    {
+      "tabela": "public.respostas",
+      "linhas": 1,
+      "linhas_backup": 1,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_registros",
+      "linhas": 5,
+      "linhas_backup": 5,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_arquivos",
+      "linhas": 15,
+      "linhas_backup": 15,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_modulos",
+      "linhas": 8,
+      "linhas_backup": 8,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_perfis",
+      "linhas": 22,
+      "linhas_backup": 22,
+      "identica": true
+    },
+    {
+      "tabela": "private.participante_links",
+      "linhas": 25,
+      "linhas_backup": 25,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_materiais",
+      "linhas": 3,
+      "linhas_backup": 3,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_respostas_pesquisadora",
+      "linhas": 2,
+      "linhas_backup": 2,
+      "identica": true
+    },
+    {
+      "tabela": "private.pesquisadora_novidades_estado",
+      "linhas": 1,
+      "linhas_backup": 1,
+      "identica": true
+    },
+    {
+      "tabela": "private.percurso_registros_historico",
+      "linhas": 0,
+      "linhas_backup": 0,
+      "identica": true
+    },
+    {
+      "tabela": "private.orientacao_mensagens",
+      "linhas": 0,
+      "linhas_backup": 0,
+      "identica": true
+    },
+    {
+      "tabela": "public.pesquisadora_acessos",
+      "linhas": 2,
+      "linhas_backup": 2,
+      "identica": true
+    }
+  ],
+  "clock": [
+    {
+      "result": "passed",
+      "checks": "Relógio, finalização de dois minutos, recuperação sem clientes, 13 tabelas privadas, funções privilegiadas e separação de contas reais/teste"
+    }
+  ],
+  "letter": [
+    {
+      "result": "passed",
+      "checks": "Carta existente sob RLS anon: escrita, rascunho, revisão, lacre e isolamento individual; dados TESTE revertidos"
+    }
+  ],
+  "contingency": [
+    {
+      "result": "passed",
+      "checks": "Pausar, prorrogar, retomar, liberação excepcional e recuperação após perda da reserva de escrita"
+    }
+  ]
+}

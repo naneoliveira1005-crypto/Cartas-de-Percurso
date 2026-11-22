@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.openai/
+.env*
+test-results/
+private-backup/
+*.log
+supabase/.temp/

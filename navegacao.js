@@ -1,15 +1,18 @@
 'use strict';
 function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,navegar,sair}){
+ modulos=organizarPercursoIntegrado(modulos);
  document.body.classList.add('dashboard');const root=document.getElementById('app');root.replaceChildren();
  const nav=document.createElement('nav');nav.className='sidebar';nav.setAttribute('aria-label','Encontros');
  const paginas=[];
  const abrirPagina=id=>{
+   if(id==='e23'){location.href='e23.html';return;}
+   if(id==='referencial'){location.href='e23.html';return;}
    if(id===selecionado)return;
    const resultado=navegar(id);
    if(resultado===false)return;
    requestAnimationFrame(()=>document.querySelector('.workspace')?.scrollIntoView({behavior:'auto',block:'start'}));
  };
- const add=(id,titulo,sub,target=nav)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}b.onclick=()=>abrirPagina(id);target.append(b);paginas.push({id,titulo});return b;};
+ const add=(id,titulo,sub,target=nav)=>{const b=document.createElement('button');b.type='button';b.className=id===selecionado?'nav-item active':'nav-item';if(id===selecionado)b.setAttribute('aria-current','page');const a=document.createElement('strong');a.textContent=titulo;b.append(a);if(sub){const s=document.createElement('span');s.textContent=sub;b.append(s);}const module=modulos.find(x=>x.id===id);if(module?.locked&&!pesquisadora&&!observadora&&!orientadora){b.disabled=true;b.title='Conteúdo em preparação';}b.onclick=()=>abrirPagina(id);target.append(b);paginas.push({id,titulo});return b;};
  add('inicio','Início','Por Escrito');
  const perfis=document.createElement('div');perfis.className='nav-profile-pair';nav.append(perfis);
  add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira',perfis);
@@ -148,3 +151,22 @@ function montarPortasPerfis(abrirPesquisadora,abrirNos){
  nos.append(b,h2,p2,b2);duo.append(mim,nos);return duo;
 }
 window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;window.montarPerfilPesquisadora=montarPerfilPesquisadora;window.montarPortasPerfis=montarPortasPerfis;
+
+function organizarPercursoIntegrado(modulos){
+ const find=id=>modulos.find(m=>m.id===id);
+ const item=(id,titulo,tipo='encontro')=>({...find(id),id,titulo,tipo,locked:!find(id)?.liberado});
+ return [find('perfil'),item('e1','E1 — O trabalho vivido','memoria'),{id:'e23',titulo:'E2 e E3 — Nosso percurso integrado',liberado:true},item('carta','Carta de Percurso — O que ainda preciso dizer','carta'),item('e4','E4 — A decisão profissional'),item('e5','E5 — A sistematização colaborativa'),{id:'referencial',titulo:'Referencial da Coordenação Pedagógica de Barrocas',locked:true},find('livre')].filter(Boolean);
+}
+function montarLinhaPercurso(modulos,navegar){
+ const route=document.createElement('section');route.className='e23-linear-route';
+ const title=document.createElement('h2');title.textContent='Nosso percurso de construção';route.append(title);
+ const subtitles={e1:'O que fazemos quando coordenamos?',e23:'O que aprendemos para coordenar? · O que sustenta o nosso olhar?',carta:'Um espaço individual de escrita livre, no seu tempo.',e4:'Com base em que decidimos e atuamos?',e5:'Que referências podemos construir juntas?',referencial:'Horizonte da nossa construção.'};
+ for(const m of organizarPercursoIntegrado(modulos).filter(m=>subtitles[m.id])){
+  const line=document.createElement('article');line.className='e23-route-point'+(m.id==='e23'?' integrated':'');
+  const h=document.createElement('h3');h.textContent=m.titulo;const p=document.createElement('p');p.textContent=subtitles[m.id];line.append(h,p);
+  if(m.locked){const note=document.createElement('span');note.className='muted';note.textContent='Conteúdo em preparação';line.append(note);}
+  else{const b=document.createElement('button');b.className='secondary';b.textContent=m.id==='e23'?'Abrir percurso integrado':m.id==='carta'?'Abrir minha carta':'Revisitar encontro';b.onclick=()=>m.id==='e23'?location.assign('e23.html'):navegar(m.id);line.append(b);}route.append(line);
+ }
+ return route;
+}
+window.montarLinhaPercurso=montarLinhaPercurso;
