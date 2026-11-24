@@ -11,3 +11,13 @@
 
 
 @media print{header,footer,nav,aside,button,label,select,.toolbar{display:none!important}.e23,.e23 .card,.e23 .read{height:auto;max-height:none;overflow:visible}.e23 .read{white-space:pre-wrap;overflow-wrap:anywhere}}
+
+.mapa-percurso > h2{font-family:Georgia,serif;font-weight:400;font-size:clamp(2rem,4vw,3.4rem);margin:1.25rem 0 2rem}
+.mapa-percurso > ol{list-style:none;margin:0;padding:0 0 0 clamp(.75rem,2vw,1.75rem);border-left:2px solid #a68549}
+.mapa-percurso li{border-bottom:1px solid #cfd9d3;padding:1rem 0 1.25rem}
+.mapa-percurso li:nth-child(2){background:#e7efea;margin:.75rem 0;padding:1.25rem}
+.mapa-percurso h3{font:400 1.4rem Georgia,serif;margin:0 0 .5rem}
+.mapa-percurso p{margin:.25rem 0;line-height:1.5}
+.mapa-percurso li:first-child .mapa-leituras{display:flex;flex-wrap:wrap;gap:.55rem}
+.mapa-percurso li:first-child p{border:1px solid #d5ddd7;background:#f9fbf9;padding:.45rem .7rem}
+.mapa-percurso button{margin-top:.65rem}

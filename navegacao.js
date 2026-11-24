@@ -1,5 +1,5 @@
 'use strict';
-function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,navegar,sair}){
+function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,homologacao=false,navegar,sair}){
  document.body.classList.add('dashboard');const root=document.getElementById('app');root.replaceChildren();
  const nav=document.createElement('nav');nav.className='sidebar';nav.setAttribute('aria-label','Encontros');
  const paginas=[];
@@ -14,12 +14,13 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
  const perfis=document.createElement('div');perfis.className='nav-profile-pair';nav.append(perfis);
  add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira',perfis);
  const perfilModulo=modulos.find(m=>m.id==='perfil');if(perfilModulo)add('perfil','Muito sobre nós','Minha trajetória',perfis);
- for(const m of modulos.filter(m=>m.id!=='perfil'))add(
+ if(modulos.some(m=>m.id==='e23'))add('mapa','Nosso percurso de construção');
+ for(const m of modulos.filter(m=>!['perfil','mapa'].includes(m.id)))add(
    m.id,
    m.id==='carta'?'Carta de Percurso':m.id==='livre'?'Entre encontros':/^e\d$/.test(m.id)?m.id.toUpperCase():m.titulo,
    m.id==='e23'?'Percurso integrado':m.id==='carta'?'O que ainda preciso dizer'+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':''):m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':'')
  );
- if(pesquisadora){add('novidades','Novidades','Movimentações recentes');add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
+ if(pesquisadora&&!homologacao){add('novidades','Novidades','Movimentações recentes');add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
  if(orientadora)add('orientacao','Orientação','Canal privado com Nanny');
  const content=document.createElement('section');content.className='workspace';const identity=document.createElement('div');identity.className='identity';const n=document.createElement('span');n.textContent=(pesquisadora?'Pesquisadora · ':orientadora?'Orientadora · ':observadora?'Observadora · ':'Meu percurso · ')+nome;const out=document.createElement('button');out.className='secondary';out.textContent='Sair';out.onclick=sair;identity.append(n,out);content.append(identity);const panel=document.createElement('div');panel.id='conteudo';const montarAcoes=posicao=>{
    const barra=document.createElement('nav');
@@ -148,3 +149,45 @@ function montarPortasPerfis(abrirPesquisadora,abrirNos){
  nos.append(b,h2,p2,b2);duo.append(mim,nos);return duo;
 }
 window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;window.montarPerfilPesquisadora=montarPerfilPesquisadora;window.montarPortasPerfis=montarPortasPerfis;
+
+
+function montarMapaPorEscrito(abrirOficina){
+ const secao=document.createElement('section');
+ secao.className='mapa-percurso';
+ const titulo=document.createElement('h2');
+ titulo.textContent='Nosso percurso de construção';
+ secao.append(titulo);
+ const lista=document.createElement('ol');
+ const etapas=[
+   ['E1 — O trabalho vivido',['As atribuições da coordenação pedagógica','O que fazemos com essas atribuições','Como nos organizamos para realizá-las']],
+   ['E2 + E3 — Encontros integrados',['O que aprendemos para coordenar?','O que sustenta o nosso olhar?']],
+   ['E4 — A decisão profissional',['Com base em que decidimos e atuamos?']],
+   ['E5 — A sistematização colaborativa',['Que referências podemos construir juntas?']],
+   ['Referencial da Coordenação Pedagógica de Barrocas',[]]
+ ];
+ etapas.forEach(([nome,perguntas],indice)=>{
+   const etapa=document.createElement('li');
+   const titulo=document.createElement('h3');
+   titulo.textContent=nome;
+   etapa.append(titulo);
+   const leituras=document.createElement('div');
+   leituras.className='mapa-leituras';
+   for(const texto of perguntas){
+     const leitura=document.createElement('p');
+     leitura.textContent=texto;
+     leituras.append(leitura);
+   }
+   etapa.append(leituras);
+   if(indice===1){
+     const link=document.createElement('button');
+     link.type='button';
+     link.className='secondary';
+     link.textContent='Abrir E2–E3 integrados';
+     link.onclick=abrirOficina;
+     etapa.append(link);
+   }
+   lista.append(etapa);
+ });
+ secao.append(lista);
+ return secao;
+}

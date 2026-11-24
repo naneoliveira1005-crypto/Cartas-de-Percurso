@@ -196,6 +196,7 @@ function modulosDoPainel(){
 }
 function render(){
  app=montarPainel({modulos:modulosDoPainel(),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ if(encontroAtual==='mapa'){app.append(montarMapaPorEscrito(()=>{encontroAtual='e23';render();}));return;}
  if(encontroAtual==='e23'){
   const host=el('section',undefined,'e23');app.append(host);
   const credencial=chave;
