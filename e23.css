@@ -21,3 +21,18 @@
 .mapa-percurso li:first-child .mapa-leituras{display:flex;flex-wrap:wrap;gap:.55rem}
 .mapa-percurso li:first-child p{border:1px solid #d5ddd7;background:#f9fbf9;padding:.45rem .7rem}
 .mapa-percurso button{margin-top:.65rem}
+.oficina-faixa,.oficina-paginacao{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.65rem;margin:.6rem 0}
+.oficina-faixa{background:#184737;color:white;padding:.65rem .9rem;border-radius:.45rem}
+.oficina-etapas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.35rem;margin:.7rem 0}
+.oficina-etapas button{min-width:0;text-align:left;padding:.55rem;color:#173d34;background:#dcead6;border:1px solid transparent;overflow-wrap:anywhere}
+.oficina-etapas button:nth-child(2){background:#f4e6c8}
+.oficina-etapas button:nth-child(3){background:#cde3ed}
+.oficina-etapas button:nth-child(4){background:#e2ebda}
+.oficina-etapas button:nth-child(5){background:#184737;color:white}
+.oficina-etapas button[aria-pressed=true]{outline:2px solid #245746;outline-offset:-2px}
+.oficina-etapas small{display:block;margin-top:.35rem}
+.oficina-areas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+.oficina-consulta,.oficina-escrita{min-width:0;background:#fff;border:1px solid #dbe1da;border-radius:.5rem;padding:.8rem}
+.oficina-areas .e23-panel{border:0;padding:0;margin:0}
+.oficina-areas [hidden]{display:none!important}
+@media(max-width:720px){.oficina-areas{grid-template-columns:1fr}.oficina-etapas{display:flex;overflow-x:auto}.oficina-etapas button{flex:0 0 9rem}}

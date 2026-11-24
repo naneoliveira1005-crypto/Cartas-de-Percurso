@@ -51,16 +51,27 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  }));
  return m;
  }
+ let etapaVisivel, faseAnterior, destino, navegacao;
+ const liberacao=[2,4,5,5,6];
+ const orientacoes=['Leiam a materialidade e registrem juntos o que observam.','Leiam a análise do grupo parceiro e preparem a interlocução.','Leiam as perguntas recebidas e construam as respostas do grupo.','Retomem a análise inicial à luz da conversa com as colegas.','Registrem o que o grupo considera importante para o Referencial.'];
  function draw(){
  for(const stop of limpezas)stop();limpezas.clear();
  ultimo=assinatura(sala);const f=sala.sala.fase,g=sala.grupo;
- host.replaceChildren(el('h2','E2–E3 integrados'),el('p',c.introducao),el('h3',nomes[f]),indicador);
+ destino=host;
+ navegacao=null;
+ if(f!==faseAnterior){etapaVisivel=({2:1,3:1,4:2,5:3,6:5,7:5,8:5})[f];faseAnterior=f;}
+ if(edit)etapaVisivel=edit.b;
+ const orientacao=el('p',etapaVisivel?orientacoes[etapaVisivel-1]:f===1?'Leia a materialidade e registre individualmente o que chama sua atenção.':c.introducao,'e23-context');
+ const faixa=el('div',undefined,'oficina-faixa');
+ const materialGrupo=c.materiais[codigos.indexOf(sala.sala.materiais[g])];
+ if(g)faixa.append(el('strong','Grupo '+g+(materialGrupo?' · '+materialGrupo.titulo:'')));
+ host.replaceChildren(el('h2','E2–E3 integrados'),orientacao,faixa,indicador);
  if(f>0&&f<7){
  const out=el('output');const origem=Date.now(),servidor=Date.parse(sala.agora);
  const tick=()=>{const instante=sala.sala.pausa?Date.parse(sala.sala.pausa):servidor+Date.now()-origem;
  const n=Math.max(0,sala.sala.segundos-Math.floor((instante-Date.parse(sala.sala.inicio))/1000));
  out.textContent=(sala.sala.pausa?'Pausado · ':'')+Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+(n===0?' · A escrita continua aberta.':'');};
- tick();host.append(out);const t=setInterval(tick,1000);limpezas.add(()=>clearInterval(t));
+ tick();faixa.append(out);const t=setInterval(tick,1000);limpezas.add(()=>clearInterval(t));
  }
  if(f===0){
  const box=el('section',undefined,'e23-materials');host.append(box);
@@ -70,8 +81,31 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  card.append(botao(escolhida?'Escolhida':'Escolher esta materialidade',async()=>{if(operando)return;operando=true;indicador.textContent='Salvando';try{sala=await oficina('salvar',{bloco:-1,versao:registro(0,-1)?.versao||0,dados:[codigos[i]]});indicador.textContent='Salvo';draw();}catch(e){indicador.textContent=erro(e);}finally{operando=false;}}));box.append(card);}return;
  }
  if(!g){host.append(el('p','Aguardando a organização dos grupos pela pesquisadora.'));return;}
- const parceiro=sala.sala.pares[g-1];const o=f===4?parceiro:g;
- if(o){host.append(el('p','Grupo '+g+(o!==g?' · Leitura do grupo '+o:'')));material(o,host);}
+ const parceiro=sala.sala.pares[g-1];
+ const o=f===4?parceiro:g;
+ const consulta=el('section',undefined,'oficina-consulta');
+ const escrever=el('section',undefined,'oficina-escrita');
+ const areas=el('div',undefined,'oficina-areas');
+ areas.append(consulta,escrever);
+ if(f>=2){
+   navegacao=el('nav',undefined,'oficina-etapas');
+   navegacao.setAttribute('aria-label','Etapas da escrita coletiva');
+   host.append(navegacao);
+   for(let i=1;i<=5;i++){
+     const icones=['▤','♧','☏','↻','☆'];
+     const concluida=registro(i===2?parceiro:g,i)?.finalizado;
+     const estado=concluida?'Concluída':f<liberacao[i-1]?'Aguarda liberação':f===liberacao[i-1]?'Em andamento':'Disponível';
+     const aba=botao(icones[i-1]+' '+i+'. '+titulos[i],()=>{if(ativos.size)return;edit=null;etapaVisivel=i;draw();});
+     aba.append(el('small',estado));
+     aba.disabled=f<liberacao[i-1]||!!ativos.size;
+     aba.setAttribute('aria-pressed',String(i===etapaVisivel));
+     navegacao.append(aba);
+   }
+ }
+ host.append(areas);
+ consulta.append(el('h3','Materialidade em consulta'));
+ if(o)material(o,consulta);
+ destino=escrever;
  if(f===1)bloco(g,0,[c.individual],true);
  if(f>=2){
  if(o)bloco(o,1,c.materiais[codigos.indexOf(sala.sala.materiais[o])]?.questoes||[],f===2);
@@ -83,10 +117,10 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  const resposta=registro(g,3);const vinculo=historico(g,3).find(h=>h.versao===resposta?.versao)?.registro;
  const maisRecente=edit?.b===3?historico(g,3).at(-1)?.registro:vinculo;
  const versao=versaoPerguntas??maisRecente?.versao_da_interlocucao??origem.versao;
- if(opcoes.length&&(!resposta?.finalizado||edit?.b===3)){const l=el('label','Versão da interlocução');const select=el('select');for(const v of [origem.versao,...opcoes.map(h=>h.versao)]){const opt=el('option','Versão '+v);opt.value=v;select.append(opt);}select.value=versao;select.onchange=()=>{if(ativos.size){select.value=versao;return;}versaoPerguntas=Number(select.value);draw();};l.append(select);host.append(l);}
+ if(opcoes.length&&(!resposta?.finalizado||edit?.b===3)){const l=el('label','Versão da interlocução');const select=el('select');for(const v of [origem.versao,...opcoes.map(h=>h.versao)]){const opt=el('option','Versão '+v);opt.value=v;select.append(opt);}select.value=versao;select.onchange=()=>{if(ativos.size){select.value=versao;return;}versaoPerguntas=Number(select.value);draw();};l.append(select);if(etapaVisivel===3)destino.append(l);}
  const dados=opcoes.find(h=>h.versao===versao)?.registro.dados||origem.dados;
  bloco(g,3,dados.slice(1).filter(q=>q.trim()),f===5,versao);
- }else host.append(el('p','Aguardando a interlocução finalizada das colegas.'));
+ }else if(etapaVisivel===3)destino.append(el('p','Aguardando a interlocução finalizada das colegas.'));
  bloco(g,4,[c.retomada],f===5);
  }
  if(f>=6)bloco(g,5,[c.referencial],f===6);
@@ -103,15 +137,29 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  const r=registro(o,b),hist=historico(o,b),g=sala.grupo;
  const autor=b===2?sala.sala.pares[g-1]===o:g===o;
  const revisando=edit?.o===o&&edit?.b===b;
- const sec=el('section',undefined,'card e23-panel');host.append(sec);sec.append(el('h3',titulos[b]),el('p',b===0?'Registro individual privado':'Produção vinculada ao grupo '+o,'muted'));
+ if(navegacao&&b!==etapaVisivel&&!(b===1&&o!==g&&etapaVisivel===2))return;
+ const sec=el('section',undefined,'card e23-panel');
+ const leituraParceira=b===1&&o!==g&&etapaVisivel===2;
+ (leituraParceira?destino.previousElementSibling:destino).append(sec);sec.append(el('h3',titulos[b]),el('p',b===0?'Registro individual privado':'Produção vinculada ao grupo '+o,'muted'));
  const editar=autor&&(revisando||(aberto&&!r?.finalizado));
  const anterior=revisando?hist.at(-1):null;
  const baseResposta=anterior?.registro||hist.find(h=>h.versao===r?.versao)?.registro;
  const valores=b===3&&baseResposta?.versao_da_interlocucao!==undefined&&vPerg!==baseResposta.versao_da_interlocucao?perguntas.map(q=>baseResposta.perguntas_e_respostas?.find(par=>par.pergunta===q)?.resposta||''):anterior?.registro.dados||r?.dados||[];
  let versao=anterior?.versao??r?.versao??0, timer, emCurso=false,seq=0,conflito=false;
  const fields=[];const st=el('p',editar&&r?'Salvo':'','e23-status');st.setAttribute('role','status');
- const marcar=()=>{ativos.add(sec);onDirty(true);};const limpar=()=>{ativos.delete(sec);onDirty(ativos.size>0);};
- for(const [i,q] of perguntas.entries()){const l=el('label',q,'e23-question');if(editar){const campo=el('textarea');campo.value=valores[i]||'';campo.oninput=()=>{seq++;marcar();st.textContent='Alteração pendente';clearTimeout(timer);if(!conflito)timer=setTimeout(()=>salvar(false),900);};fields.push(campo);l.append(campo);}else l.append(el('p',valores[i]||'Aguardando registro.','read'));sec.append(l);}
+ const bloquear=()=>navegacao?.querySelectorAll('button').forEach((aba,i)=>aba.disabled=!!ativos.size||sala.sala.fase<liberacao[i]);
+ const marcar=()=>{ativos.add(sec);onDirty(true);bloquear();};const limpar=()=>{ativos.delete(sec);onDirty(ativos.size>0);bloquear();};
+ const questoes=[];
+ for(const [i,q] of perguntas.entries()){const l=el('label',q,'e23-question');if(editar){const campo=el('textarea');campo.value=valores[i]||'';campo.oninput=()=>{seq++;marcar();st.textContent='Alteração pendente';clearTimeout(timer);if(!conflito)timer=setTimeout(()=>salvar(false),900);};fields.push(campo);l.append(campo);}else l.append(el('p',valores[i]||'Aguardando registro.','read'));questoes.push(l);sec.append(l);}
+ if(b===1&&editar&&questoes.length>1){
+   let atual=0;
+   const pos=el('span');
+   const anterior=botao('Pergunta anterior',()=>{atual--;mostrar();});
+   const proxima=botao('Próxima pergunta',()=>{atual++;mostrar();});
+   const mostrar=()=>{questoes.forEach((q,i)=>q.hidden=i!==atual);pos.textContent=(atual+1)+' de '+questoes.length;anterior.disabled=atual===0;proxima.disabled=atual===questoes.length-1;};
+   const controles=el('div',undefined,'oficina-paginacao');controles.append(anterior,pos,proxima);sec.append(controles);mostrar();
+ }
+
  async function salvar(final){
  clearTimeout(timer);if(emCurso||conflito||!sec.isConnected)return;
  if(final&&ativos.size>Number(ativos.has(sec))){st.textContent='Aguarde o salvamento do outro bloco.';return;}
