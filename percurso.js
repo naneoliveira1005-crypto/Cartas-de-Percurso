@@ -193,7 +193,7 @@ async function abrirOficina(){
  const host=el('section',undefined,'e23');app.append(host);
  const chave=token;
  try{
-   const modulo=await import('./e23-coordenadoras.js');
+   const modulo=await import('./e23-coordenadoras.js?v=paineis2');
    if(host.isConnected)await modulo.abrir({host,rpc,chave,el,onDirty:v=>{if(host.isConnected)dirty=v;}});
  }catch(e){if(host.isConnected)host.replaceChildren(el('p','Erro ao carregar a oficina. '+e.message,'notice'),btn('Tentar novamente',abrirOficina));}
 }
@@ -364,7 +364,7 @@ openModule=function(m){if(data?.participante?.codigo?.startsWith('ORI')){abrirVi
 /* A capa é a primeira tela para todas as participantes.
    O token pessoal permanece restrito à sessão e só abre o percurso após clique. */
 (async()=>{
- if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js')).entrar({host:app,el,btn,pesquisadora:false});return;}
+ if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=paineis2')).entrar({host:app,el,btn,pesquisadora:false});return;}
  const u=new URL(location.href);
  const hash=new URLSearchParams(u.hash.slice(1));
  const incoming=(u.searchParams.get('token')||hash.get('token')||hash.get('chave')||'').trim();

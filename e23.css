@@ -43,3 +43,20 @@
 .oficina-consulta,.oficina-escrita{border-top:2px solid #c0a36a}
 .oficina-escolhas{grid-template-columns:1fr}
 @media(max-width:520px){.e23 .e23-context,.e23 .oficina-consulta p,.e23 .oficina-escrita .read{text-align:start}}
+.oficina-materialidades{margin:1rem 0}
+.oficina-materialidades .oficina-escolhas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem}
+.oficina-escolhas .e23-material{padding:.8rem;background:#fff;border-color:#d8ddd4;gap:.45rem}
+.oficina-escolhas .e23-material:nth-child(1){background:#e7efe3}
+.oficina-escolhas .e23-material:nth-child(2){background:#f7eedb}
+.oficina-escolhas .e23-material:nth-child(3){background:#e8eff2}
+.oficina-escolhas h3{font-size:1rem;margin:0;line-height:1.3}
+.oficina-escolhas button{margin-top:auto}
+.oficina-areas>section:only-child{grid-column:1/-1}
+.oficina-areas{grid-template-columns:minmax(0,1.06fr) minmax(0,1fr)}
+.oficina-escrita textarea{background:#fffefb;min-height:10rem}
+.oficina-etapas button{margin:0}
+@media(max-width:720px){
+ .oficina-areas{grid-template-columns:1fr}
+ .oficina-materialidades .oficina-escolhas{display:flex;overflow-x:auto}
+ .oficina-escolhas .e23-material{flex:0 0 12rem}
+}

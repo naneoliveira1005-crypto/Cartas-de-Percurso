@@ -9,6 +9,7 @@ export async function entrar({host,el,btn,pesquisadora}){
  if(!l.actor?.is_test||l.actor.role!==(pesquisadora?'pesquisadora':'participante'))throw Error('Confira a chave deste acesso.');
  const oficina=el('section',undefined,'e23');
  const modulos=[
+   ...(!pesquisadora?[{id:'perfil',titulo:'Muito sobre nós',liberado:true}]:[]),
    {id:'mapa',titulo:'Nosso percurso de construção',liberado:true},
    {id:'e23',titulo:'E2–E3 integrados',liberado:true}
  ];
@@ -19,6 +20,13 @@ export async function entrar({host,el,btn,pesquisadora}){
    });
    if(pagina==='inicio')painel.append(montarAberturaPorEscrito());
    if(pagina==='sobre_pesquisadora')painel.append(montarPerfilPesquisadora());
+   if(pagina==='perfil'){
+     const registro='perfil-ficticio:'+l.actor.id;
+     const texto=el('textarea');texto.rows=8;texto.value=localStorage.getItem(registro)||'';
+     const rotulo=el('label','Minha trajetória na coordenação pedagógica');rotulo.append(texto);
+     const retorno=el('p');retorno.setAttribute('role','status');
+     painel.append(el('h2','Muito sobre nós'),el('p','Conte um pouco sobre você e sua trajetória. Este registro de teste fica neste navegador.'),rotulo,btn('Salvar minha apresentação',()=>{localStorage.setItem(registro,texto.value);retorno.textContent='Apresentação salva neste navegador.';}),retorno);
+   }
    if(pagina==='mapa')painel.append(montarMapaPorEscrito(()=>exibir('e23')));
    if(pagina==='e23')painel.append(oficina);
  }
@@ -31,7 +39,7 @@ export async function entrar({host,el,btn,pesquisadora}){
    const observar=new MutationObserver(async()=>{
      if(!oficina.isConnected)return;
      observar.disconnect();
-     try{await (await import('./e23-coordenadoras.js')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
+     try{await (await import('./e23-coordenadoras.js?v=paineis2')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
      catch(e){oficina.textContent=e.message;}
    });
    observar.observe(host,{subtree:true,childList:true});

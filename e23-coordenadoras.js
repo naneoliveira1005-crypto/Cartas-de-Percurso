@@ -46,7 +46,12 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(!m)return null;
  box.append(el('h3',m.titulo),el('p',m.contexto,'e23-context'));
  const arquivos=(meta.files||[]).filter(f=>f.material_code===codigo&&meta.materials?.some(v=>v.code===codigo&&v.status==='conferido'));
- if(!arquivos.length)box.append(el('p','Arquivo em preparação.','muted'));
+ if(!arquivos.length&&codigo==='A'&&lista.actor.is_test){
+ const link=el('a','Ampliar planejamento semanal do Grupo 5');
+ link.href='materialidades/planejamento-grupo-5.pdf';link.target='_blank';link.rel='noopener noreferrer';
+ const frame=el('iframe');frame.title='Planejamento semanal do Grupo 5';frame.src=link.href;frame.className='e23-source';
+ box.append(link,frame);
+ }else if(!arquivos.length)box.append(el('p','Arquivo em preparação.','muted'));
  for(const f of arquivos)box.append(botao('Abrir '+f.name,async()=>{
   const r=await fetch('https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/por-escrito-e23-files',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:chave,session_id:sid,file_id:f.id})});if(!r.ok)throw Error('Arquivo indisponível.');const {url}=await r.json();if(!/^https:\/\//.test(url))throw Error('Arquivo indisponível.');
   let frame=box.querySelector('iframe');if(!frame){frame=el('iframe');frame.className='e23-source';frame.referrerPolicy='no-referrer';box.append(frame);}frame.title=f.name;frame.src=url;
@@ -78,14 +83,14 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(f===0){
  const areas=el('div',undefined,'oficina-areas');
  const consulta=el('section',undefined,'oficina-consulta');
- const escolhaBox=el('section',undefined,'oficina-escrita');
+ const escolhaBox=el('section',undefined,'oficina-materialidades');
  const box=el('div',undefined,'e23-materials oficina-escolhas');
  consulta.append(el('h3','Materialidade em consulta'));
  if(escolha)material(escolha,consulta);
  else consulta.append(el('p','Escolha uma materialidade para consultar o documento.'));
  escolhaBox.append(el('h3','Escolha da materialidade'),box);
- areas.append(consulta,escolhaBox);host.append(areas);
- for(const [i,m] of c.materiais.entries()){const card=el('article',undefined,'e23-material');card.append(el('h3',m.titulo),el('p',m.contexto));
+ areas.append(consulta);host.append(escolhaBox,areas);
+ for(const [i,m] of c.materiais.entries()){const card=el('article',undefined,'e23-material');card.append(el('small','M'+(i+1)),el('h3',m.titulo));
  if(codigos[i]==='C'&&!meta.materials?.some(v=>v.code==='C'&&v.status==='conferido')){card.append(el('p','Resultados municipais do Ciclo III em preparação.'));box.append(card);continue;}
  const escolhida=registro(0,-1)?.dados[0]===codigos[i];
  card.append(botao(escolhida?'Escolhida':'Escolher esta materialidade',async()=>{if(operando)return;operando=true;indicador.textContent='Salvando';try{sala=await oficina('salvar',{bloco:-1,versao:registro(0,-1)?.versao||0,dados:[codigos[i]]});indicador.textContent='Salvo';draw();}catch(e){indicador.textContent=erro(e);}finally{operando=false;}}));box.append(card);}return;

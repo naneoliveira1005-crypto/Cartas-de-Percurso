@@ -336,7 +336,7 @@ function render(){
 /* A mesma capa abre o portal reservado da pesquisadora antes de carregar o painel.
    A chave permanece na sessão; só consultar os registros após a entrada explícita. */
 (async()=>{
- if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js')).entrar({host:app,el,btn,pesquisadora:true});return;}
+ if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=paineis2')).entrar({host:app,el,btn,pesquisadora:true});return;}
  const h=new URLSearchParams(location.hash.slice(1));
  chave=h.get('chave')||sessionStorage.getItem('percurso_admin')||'';
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);
