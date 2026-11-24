@@ -41,8 +41,8 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  }
  function historico(o,b){return (sala.historico_coletivo||[]).filter(h=>h.origem===o&&h.bloco===b).sort((a,b)=>a.versao-b.versao);}
  function registro(o,b){return sala.registros.find(r=>r.origem===o&&r.bloco===b);}
- function material(o,box){
- const codigo=sala.sala.materiais[o],m=c.materiais[codigos.indexOf(codigo)];
+ function material(codigo,box){
+ const m=c.materiais[codigos.indexOf(codigo)];
  if(!m)return null;
  box.append(el('h3',m.titulo),el('p',m.contexto,'e23-context'));
  const arquivos=(meta.files||[]).filter(f=>f.material_code===codigo&&meta.materials?.some(v=>v.code===codigo&&v.status==='conferido'));
@@ -63,8 +63,10 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(edit)etapaVisivel=edit.b;
  const orientacao=el('p',etapaVisivel?orientacoes[etapaVisivel-1]:f===1?'Leia a materialidade e registre individualmente o que chama sua atenção.':c.introducao,'e23-context');
  const faixa=el('div',undefined,'oficina-faixa');
- const materialGrupo=c.materiais[codigos.indexOf(sala.sala.materiais[g])];
- if(g)faixa.append(el('strong','Grupo '+g+(materialGrupo?' · '+materialGrupo.titulo:'')));
+ const escolha=registro(0,-1)?.dados[0];
+ const codigoGrupo=f===0?escolha:sala.sala.materiais[g];
+ const materialGrupo=c.materiais[codigos.indexOf(codigoGrupo)];
+ if(g||materialGrupo)faixa.append(el('strong',[g?'Grupo '+g:'',materialGrupo?'M'+(codigos.indexOf(codigoGrupo)+1)+' · '+materialGrupo.titulo:''].filter(Boolean).join(' · ')));
  host.replaceChildren(el('h2','E2–E3 integrados'),orientacao,faixa,indicador);
  if(f>0&&f<7){
  const out=el('output');const origem=Date.now(),servidor=Date.parse(sala.agora);
@@ -74,7 +76,15 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  tick();faixa.append(out);const t=setInterval(tick,1000);limpezas.add(()=>clearInterval(t));
  }
  if(f===0){
- const box=el('section',undefined,'e23-materials');host.append(box);
+ const areas=el('div',undefined,'oficina-areas');
+ const consulta=el('section',undefined,'oficina-consulta');
+ const escolhaBox=el('section',undefined,'oficina-escrita');
+ const box=el('div',undefined,'e23-materials oficina-escolhas');
+ consulta.append(el('h3','Materialidade em consulta'));
+ if(escolha)material(escolha,consulta);
+ else consulta.append(el('p','Escolha uma materialidade para consultar o documento.'));
+ escolhaBox.append(el('h3','Escolha da materialidade'),box);
+ areas.append(consulta,escolhaBox);host.append(areas);
  for(const [i,m] of c.materiais.entries()){const card=el('article',undefined,'e23-material');card.append(el('h3',m.titulo),el('p',m.contexto));
  if(codigos[i]==='C'&&!meta.materials?.some(v=>v.code==='C'&&v.status==='conferido')){card.append(el('p','Resultados municipais do Ciclo III em preparação.'));box.append(card);continue;}
  const escolhida=registro(0,-1)?.dados[0]===codigos[i];
@@ -104,7 +114,7 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  }
  host.append(areas);
  consulta.append(el('h3','Materialidade em consulta'));
- if(o)material(o,consulta);
+ if(o)material(sala.sala.materiais[o],consulta);
  destino=escrever;
  if(f===1)bloco(g,0,[c.individual],true);
  if(f>=2){

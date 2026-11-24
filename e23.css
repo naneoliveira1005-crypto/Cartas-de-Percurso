@@ -36,3 +36,10 @@
 .oficina-areas .e23-panel{border:0;padding:0;margin:0}
 .oficina-areas [hidden]{display:none!important}
 @media(max-width:720px){.oficina-areas{grid-template-columns:1fr}.oficina-etapas{display:flex;overflow-x:auto}.oficina-etapas button{flex:0 0 9rem}}
+.e23 .e23-context,.e23 .oficina-consulta p,.e23 .oficina-escrita .read{line-height:1.6;text-align:justify;hyphens:auto}
+.e23 .e23-context{background:#fbfaf4;border-left:3px solid #ab843e;padding:.65rem .85rem}
+.oficina-faixa{border-bottom:3px solid #b89451}
+.oficina-etapas button[aria-pressed=true]{outline-color:#a67e32;box-shadow:inset 0 -3px #b89451}
+.oficina-consulta,.oficina-escrita{border-top:2px solid #c0a36a}
+.oficina-escolhas{grid-template-columns:1fr}
+@media(max-width:520px){.e23 .e23-context,.e23 .oficina-consulta p,.e23 .oficina-escrita .read{text-align:start}}
