@@ -39,7 +39,7 @@ export async function entrar({host,el,btn,pesquisadora}){
    const observar=new MutationObserver(async()=>{
      if(!oficina.isConnected)return;
      observar.disconnect();
-     try{await (await import('./e23-coordenadoras.js?v=paineis2')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
+     try{await (await import('./e23-coordenadoras.js?v=dourado3')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
      catch(e){oficina.textContent=e.message;}
    });
    observar.observe(host,{subtree:true,childList:true});

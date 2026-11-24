@@ -60,3 +60,24 @@
  .oficina-materialidades .oficina-escolhas{display:flex;overflow-x:auto}
  .oficina-escolhas .e23-material{flex:0 0 12rem}
 }
+.e23.oficina-painel{max-width:none;background:#faf8ef;padding:clamp(.65rem,1.5vw,1.2rem);color:#13291f}
+.oficina-titulo{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;color:#123e2d;margin-bottom:.7rem}
+.oficina-titulo h2{margin:0;border-right:1px solid #b38b42;padding-right:.8rem;font-size:clamp(1.2rem,2.5vw,1.8rem)}
+.oficina-orientacao{display:flex;align-items:center;gap:1rem;border:1px solid #c6a75d;border-radius:.85rem;background:#fcf8eb;padding:.75rem 1rem}
+.oficina-orientacao h3{flex:0 0 12rem;margin:0;border-right:1px solid #b38b42;padding-right:1rem;font-size:1.15rem}
+.oficina-orientacao .e23-context{border:0;background:transparent;margin:0;padding:0}
+.oficina-painel .oficina-faixa{background:linear-gradient(90deg,#efe0bb,#faf5e7);color:#193628;border:1px solid #d5bd83;border-radius:.75rem;padding:.5rem .8rem}
+.oficina-faixa output{background:#fffdf6;border:1px solid #c6a75d;border-radius:.7rem;padding:.45rem .65rem;font-weight:700;font-variant-numeric:tabular-nums}
+.oficina-etapas button:nth-child(1),.oficina-etapas button:nth-child(4){background:#f7efd5}
+.oficina-etapas button:nth-child(3){background:#e1ead5}
+.oficina-etapas button:nth-child(5){background:#fcf4dc;color:#163827}
+.oficina-etapas button[aria-pressed=true]{background:#124632;color:white;box-shadow:inset 0 -3px #d3ad55}
+.oficina-etapas button:disabled{opacity:.8}
+.oficina-painel .oficina-consulta,.oficina-painel .oficina-escrita{background:#fffdf8;border:1px solid #bdcba5;border-radius:.85rem;padding:.55rem}
+.oficina-consulta>h3,.oficina-escrita>.oficina-registro-titulo{background:linear-gradient(120deg,#174833,#146044);color:white;border-radius:.55rem;padding:.65rem .85rem;font-size:1.1rem}
+.oficina-painel .e23-source{height:clamp(20rem,45vh,34rem);margin:.5rem 0}
+.oficina-painel .e23-panel{background:none;padding:.4rem}
+.oficina-painel .oficina-paginacao button{background:#a67c2f;color:white}
+body:has(.oficina-painel) .sidebar{background:#103b2b}
+body:has(.oficina-painel) .sidebar .nav-item.active{background:#e5c06c;color:#162c20}
+@media(max-width:720px){.oficina-orientacao{display:block}.oficina-orientacao h3{border:0;margin-bottom:.35rem}}

@@ -46,12 +46,7 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(!m)return null;
  box.append(el('h3',m.titulo),el('p',m.contexto,'e23-context'));
  const arquivos=(meta.files||[]).filter(f=>f.material_code===codigo&&meta.materials?.some(v=>v.code===codigo&&v.status==='conferido'));
- if(!arquivos.length&&codigo==='A'&&lista.actor.is_test){
- const link=el('a','Ampliar planejamento semanal do Grupo 5');
- link.href='materialidades/planejamento-grupo-5.pdf';link.target='_blank';link.rel='noopener noreferrer';
- const frame=el('iframe');frame.title='Planejamento semanal do Grupo 5';frame.src=link.href;frame.className='e23-source';
- box.append(link,frame);
- }else if(!arquivos.length)box.append(el('p','Arquivo em preparação.','muted'));
+ if(!arquivos.length)box.append(el('p','Arquivo em preparação.','muted'));
  for(const f of arquivos)box.append(botao('Abrir '+f.name,async()=>{
   const r=await fetch('https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/por-escrito-e23-files',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:chave,session_id:sid,file_id:f.id})});if(!r.ok)throw Error('Arquivo indisponível.');const {url}=await r.json();if(!/^https:\/\//.test(url))throw Error('Arquivo indisponível.');
   let frame=box.querySelector('iframe');if(!frame){frame=el('iframe');frame.className='e23-source';frame.referrerPolicy='no-referrer';box.append(frame);}frame.title=f.name;frame.src=url;
@@ -72,12 +67,17 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  const codigoGrupo=f===0?escolha:sala.sala.materiais[g];
  const materialGrupo=c.materiais[codigos.indexOf(codigoGrupo)];
  if(g||materialGrupo)faixa.append(el('strong',[g?'Grupo '+g:'',materialGrupo?'M'+(codigos.indexOf(codigoGrupo)+1)+' · '+materialGrupo.titulo:''].filter(Boolean).join(' · ')));
- host.replaceChildren(el('h2','E2–E3 integrados'),orientacao,faixa,indicador);
+ const titulo=el('header',undefined,'oficina-titulo');
+ titulo.append(el('h2','Oficina E2 – E3'),el('span','Análise de práticas para a construção do Referencial'));
+ const guia=el('section',undefined,'oficina-orientacao');
+ guia.append(el('h3','◎  Orientação da atividade'),orientacao);
+ host.classList.add('oficina-painel');
+ host.replaceChildren(titulo,guia,faixa,indicador);
  if(f>0&&f<7){
  const out=el('output');const origem=Date.now(),servidor=Date.parse(sala.agora);
  const tick=()=>{const instante=sala.sala.pausa?Date.parse(sala.sala.pausa):servidor+Date.now()-origem;
  const n=Math.max(0,sala.sala.segundos-Math.floor((instante-Date.parse(sala.sala.inicio))/1000));
- out.textContent=(sala.sala.pausa?'Pausado · ':'')+Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+(n===0?' · A escrita continua aberta.':'');};
+ out.textContent='Tempo da oficina: '+(sala.sala.pausa?'Pausado · ':'')+Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+(n===0?' · A escrita continua aberta.':'');};
  tick();faixa.append(out);const t=setInterval(tick,1000);limpezas.add(()=>clearInterval(t));
  }
  if(f===0){
@@ -85,7 +85,7 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  const consulta=el('section',undefined,'oficina-consulta');
  const escolhaBox=el('section',undefined,'oficina-materialidades');
  const box=el('div',undefined,'e23-materials oficina-escolhas');
- consulta.append(el('h3','Materialidade em consulta'));
+ consulta.append(el('h3','▤  Materialidade em análise'));
  if(escolha)material(escolha,consulta);
  else consulta.append(el('p','Escolha uma materialidade para consultar o documento.'));
  escolhaBox.append(el('h3','Escolha da materialidade'),box);
@@ -118,8 +118,9 @@ export async function abrir({host,rpc,chave,el,onDirty}){
    }
  }
  host.append(areas);
- consulta.append(el('h3','Materialidade em consulta'));
+ consulta.append(el('h3','▤  Materialidade em análise'));
  if(o)material(sala.sala.materiais[o],consulta);
+ escrever.append(el('h3',etapaVisivel?'✎  Nosso registro — Etapa '+etapaVisivel:'✎  Nosso registro','oficina-registro-titulo'));
  destino=escrever;
  if(f===1)bloco(g,0,[c.individual],true);
  if(f>=2){
