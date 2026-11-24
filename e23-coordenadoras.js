@@ -154,8 +154,8 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(b===1&&editar&&questoes.length>1){
    let atual=0;
    const pos=el('span');
-   const anterior=botao('Pergunta anterior',()=>{atual--;mostrar();});
-   const proxima=botao('Próxima pergunta',()=>{atual++;mostrar();});
+   const anterior=botao('Pergunta anterior',()=>{if(atual>0)atual--;mostrar();});
+   const proxima=botao('Próxima pergunta',()=>{if(atual<questoes.length-1)atual++;mostrar();});
    const mostrar=()=>{questoes.forEach((q,i)=>q.hidden=i!==atual);pos.textContent=(atual+1)+' de '+questoes.length;anterior.disabled=atual===0;proxima.disabled=atual===questoes.length-1;};
    const controles=el('div',undefined,'oficina-paginacao');controles.append(anterior,pos,proxima);sec.append(controles);mostrar();
  }
