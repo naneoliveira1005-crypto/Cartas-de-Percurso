@@ -30,4 +30,33 @@ if v_rev is null then raise exception 'OUTRA_ABA'; end if;
 return v_rev;
 end $$;
 revoke all on function private.e23_salvar(text,integer,jsonb,integer) from public,anon,authenticated;
+
+create function private.e23_carregar(p_token text) returns jsonb language plpgsql security definer set search_path='' as $
+declare v_id uuid; g private.e23_grupos%rowtype; ctl private.e23_controle%rowtype;
+begin
+v_id:=private.percurso_identificar(p_token);
+select gr.* into g from private.e23_grupos gr join private.e23_membros m on m.grupo=gr.id where m.participante=v_id;
+select * into ctl from private.e23_controle;
+return jsonb_build_object('etapa',ctl.etapa,'liberado',ctl.liberado,'grupo',g.nome,'material',g.material,
+'individual',coalesce((select jsonb_agg(jsonb_build_object('etapa',etapa,'texto',texto,'revisao',revisao)) from private.e23_individual where participante=v_id),'[]'::jsonb),
+'coletivo',coalesce((select jsonb_agg(jsonb_build_object('etapa',etapa,'respostas',respostas,'revisao',revisao)) from private.e23_coletivo where grupo=g.id and etapa<=ctl.etapa),'[]'::jsonb),
+'interlocucao',case when ctl.etapa>=3 then (select jsonb_build_object('material',gr.material,'nome',gr.nome,'respostas',c.respostas) from private.e23_grupos gr join private.e23_coletivo c on c.grupo=gr.id and c.etapa=2 where gr.id=g.interlocutor) end,
+'recebidas',case when ctl.etapa>=4 then (select jsonb_agg(jsonb_build_object('grupo',gr.nome,'respostas',c.respostas)) from private.e23_grupos gr join private.e23_coletivo c on c.grupo=gr.id and c.etapa=3 where gr.interlocutor=g.id) end);
+end $;
+revoke all on function private.e23_carregar(text) from public,anon,authenticated;
+create function private.e23_admin(p_chave text,p_acao text,p_dados jsonb) returns jsonb language plpgsql security definer set search_path='' as $
+begin
+perform private.percurso_admin_validar(p_chave);
+case p_acao
+when 'controle' then update private.e23_controle set etapa=(p_dados->>'etapa')::integer,liberado=(p_dados->>'liberado')::boolean;
+when 'grupo' then insert into private.e23_grupos(id,nome,material) values ((p_dados->>'id')::uuid,p_dados->>'nome',p_dados->>'material') on conflict(id) do update set nome=excluded.nome,material=excluded.material;
+when 'membro' then insert into private.e23_membros(participante,grupo) values ((p_dados->>'participante')::uuid,(p_dados->>'grupo')::uuid) on conflict(participante) do update set grupo=excluded.grupo;
+when 'par' then update private.e23_grupos set interlocutor=(p_dados->>'interlocutor')::uuid where id=(p_dados->>'grupo')::uuid and id<>(p_dados->>'interlocutor')::uuid;
+when 'consultar' then null;
+else raise exception 'ACAO_INVALIDA';
+end case;
+return jsonb_build_object('controle',(select to_jsonb(t) from private.e23_controle t),'grupos',(select coalesce(jsonb_agg(t),'[]') from private.e23_grupos t),'membros',(select coalesce(jsonb_agg(t),'[]') from private.e23_membros t),'individuais',(select coalesce(jsonb_agg(t),'[]') from private.e23_individual t),'coletivos',(select coalesce(jsonb_agg(t),'[]') from private.e23_coletivo t));
+end $;
+revoke all on function private.e23_admin(text,text,jsonb) from public,anon,authenticated;
+
 commit;
