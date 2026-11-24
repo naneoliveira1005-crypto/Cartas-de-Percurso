@@ -17,7 +17,7 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
  for(const m of modulos.filter(m=>m.id!=='perfil'))add(
    m.id,
    m.id==='carta'?'Carta de Percurso':m.id==='livre'?'Entre encontros':/^e\d$/.test(m.id)?m.id.toUpperCase():m.titulo,
-   m.id==='carta'?'O que ainda preciso dizer'+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':''):m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':'')
+   m.id==='e23'?'Percurso integrado':m.id==='carta'?'O que ainda preciso dizer'+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':''):m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':'')
  );
  if(pesquisadora){add('novidades','Novidades','Movimentações recentes');add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
  if(orientadora)add('orientacao','Orientação','Canal privado com Nanny');

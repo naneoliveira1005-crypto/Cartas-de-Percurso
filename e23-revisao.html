@@ -1,16 +1,1 @@
-<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Por Escrito — E2–E3</title><link rel="stylesheet" href="estilo.css"><link rel="stylesheet" href="e23.css"></head>
-<body><header><div class="head"><small>Por Escrito · Nanny Oliveira</small><h1>Encontros de Partilha</h1></div></header><main class="e23" id="e23"></main><script src="e23-conteudo.js"></script><script>
-'use strict';
-const root=document.getElementById('e23'), c=E23_CONTEUDO;
-let selected=null, stage=0;const drafts={};
-function node(tag,txt,cls){const e=document.createElement(tag);if(txt)e.textContent=txt;if(cls)e.className=cls;return e}
-function button(txt,fn){const b=node('button',txt);b.type='button';b.onclick=fn;return b}
-function render(){root.replaceChildren();const intro=node('section','','e23-intro');intro.append(node('h2',c.titulo),node('p',c.introducao),node('p','Revisão visual — não utilizar dados reais. Os textos de teste permanecem apenas nesta página e não são enviados à pesquisa.','notice'));root.append(intro);const nav=node('nav','','e23-steps');c.etapas.forEach((s,i)=>{const b=button((i+1)+'. '+s,()=>{stage=i;render()});b.className='e23-step';b.disabled=i>0&&!selected;if(i===stage)b.setAttribute('aria-current','step');nav.append(b)});root.append(nav);
-if(stage===0){const grid=node('section','','e23-materials');c.materiais.forEach(m=>{const card=node('article','','e23-material');card.append(node('h3',m.titulo),node('p',m.contexto),node('p','Arquivo original ainda não vinculado nesta revisão.','e23-status'),button('Selecionar para teste',()=>{selected=m;stage=1;render()}));grid.append(card)});root.append(grid);return}
-const panel=node('section','','e23-panel');panel.append(node('h3',c.etapas[stage]),node('p',selected.titulo,'e23-context'));const questions=stage===1?[c.individual]:stage===2?selected.questoes:stage===3?c.interlocucao:stage===4?['Resposta às perguntas das colegas',c.retomada]:stage===5?[c.referencial]:stage===6?[c.plenaria]:[c.carta];
-if(stage===3)panel.append(node('p','Na versão funcional, esta etapa exibirá a materialidade e as respostas originais do grupo interlocutor.','notice'));
-if(stage===4)panel.append(node('p','Na versão funcional, as perguntas recebidas serão apresentadas aqui.','notice'));
-questions.forEach((q,i)=>{const wrap=node('div','','e23-question'),id='q'+stage+'-'+i,key=selected.id+':'+id,label=node('label',q),field=node('textarea');label.htmlFor=id;field.id=id;field.value=drafts[key]||'';field.oninput=()=>{drafts[key]=field.value};wrap.append(label,field);panel.append(wrap)});const actions=node('div','','e23-actions');actions.append(button('Voltar',()=>{stage--;render()}));if(stage<7)actions.append(button('Próxima etapa',()=>{stage++;render()}));panel.append(actions,node('p','Somente demonstração visual. Nenhum registro foi salvo no banco de dados.','e23-status'));root.append(panel)}
-render();
-</script></body></html>
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./index.html"><title>Por Escrito</title><a href="./index.html">Entrar no Por Escrito</a></html>

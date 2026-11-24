@@ -182,7 +182,22 @@ function mostrarRespostasRecebidas(container,registroId=null){
  }).catch(()=>{if(sec.isConnected)info.textContent='Não foi possível consultar as respostas agora. Tente novamente mais tarde.';});
 }
 let encontroAtual='inicio';
-function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS'),orientadora=!!data?.participante?.codigo?.startsWith('ORI');app=montarPainel({modulos:data.modulos,selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,orientadora,navegar:id=>{if(!leave())return false;if(id==='inicio')home();else if(id==='sobre_pesquisadora'){encontroAtual=id;montarParticipante();app.append(montarPerfilPesquisadora());}else if(id==='orientacao')abrirOrientacao();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
+function modulosDaCoordenadora(){
+ const lista=data.modulos.filter(m=>m.id!=='e2'&&m.id!=='e3');
+ const pos=lista.findIndex(m=>m.id==='e1');
+ lista.splice(pos<0?lista.length:pos+1,0,{id:'e23',titulo:'E2–E3 integrados'});
+ return lista;
+}
+async function abrirOficina(){
+ encontroAtual='e23';montarParticipante();
+ const host=el('section',undefined,'e23');app.append(host);
+ const chave=token;
+ try{
+   const modulo=await import('./e23-coordenadoras.js');
+   if(host.isConnected)await modulo.abrir({host,rpc,chave,el,onDirty:v=>{if(host.isConnected)dirty=v;}});
+ }catch(e){if(host.isConnected)host.replaceChildren(el('p','Erro ao carregar a oficina. '+e.message,'notice'),btn('Tentar novamente',abrirOficina));}
+}
+function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS'),orientadora=!!data?.participante?.codigo?.startsWith('ORI');app=montarPainel({modulos:observadora||orientadora?data.modulos:modulosDaCoordenadora(),selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,orientadora,navegar:id=>{if(!leave())return false;if(id==='inicio')home();else if(id==='e23')abrirOficina();else if(id==='sobre_pesquisadora'){encontroAtual=id;montarParticipante();app.append(montarPerfilPesquisadora());}else if(id==='orientacao')abrirOrientacao();else openModule(data.modulos.find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
 
 
 async function abrirOrientacao(){
@@ -271,7 +286,7 @@ if(data?.participante?.codigo?.startsWith('OBS')){
  app.append(resumo);
  app.append(el('p','Os números acima mostram apenas a movimentação geral do percurso. Nenhum conteúdo individual é disponibilizado.','muted'));
  return;
-}add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));app.append(blocoPesquisadora());const list=el('div',undefined,'encounter-list');for(const m of data.modulos)list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
+}add(app,el('h2','Seu percurso tem lugar aqui.'),el('p','Olá, '+data.participante.nome+'. Escolha um encontro para escrever ou retomar seus registros.'));app.append(blocoPesquisadora());const list=el('div',undefined,'encounter-list');for(const m of modulosDaCoordenadora())list.append(btn(m.id==='livre'?'Entre encontros':m.titulo,()=>m.id==='e23'?abrirOficina():openModule(m)));app.append(list);const hist=el('section',undefined,'card');hist.append(el('h2','Meus registros'));const regs=[...(data.registros||[]),...(data.cartas||[])];if(!regs.length)hist.append(el('p','Seus registros aparecerão aqui depois de salvos.','muted'));for(const r of regs){const label=(r.modulo==='livre'?'Registro espontâneo':r.modulo.toUpperCase())+' · '+(r.complemento_de?'Complemento · ':'')+(r.status==='rascunho'?'Rascunho':'Enviado')+' · '+date(r.atualizado_em);const row=el('p');row.append(btn(label,()=>viewRecord(r),true));hist.append(row);}app.append(hist);renderArquivos(hist,{p_token:token},true);}
 function materiaisLiberadosE2(){
  if(encontroAtual!=='e2'||!Array.isArray(data?.materiais))return;
  if(document.getElementById('materiais-e2'))return;
