@@ -32,7 +32,7 @@ export async function abrir({host,chamar,el,btn}){
  function secao(t){const box=el('details',undefined,'card');box.open=secaoAberta.has(t);box.append(el('summary',t));box.ontoggle=()=>{if(box.isConnected){if(box.open)secaoAberta.add(t);else secaoAberta.delete(t);}};host.append(box);return box;}
  async function listar(){
  const l=await api('sessions');if(l.actor?.role!=='pesquisadora')throw Error('Acesso reservado à pesquisadora.');
- host.replaceChildren(el('h2','E2–E3 integrados'));const oficiais=l.sessions.filter(s=>!s.is_test);
+ host.replaceChildren(el('h2','E2–E3 integrados'));if(l.actor.is_test){await entrar(l.actor.session_id);return;}const oficiais=l.sessions.filter(s=>!s.is_test);
  for(const s of oficiais)host.append(acao(s.title+' · '+(s.published?'Liberada':'Fechada'),()=>entrar(s.id)));
  if(!oficiais.some(s=>s.title===titulo))host.append(acao('Criar sessão fechada de 25/11/2026',async()=>{const sessao=await api('create_session',{title:titulo,is_test:false});await entrar(sessao.id);}));
  }
@@ -62,7 +62,7 @@ export async function abrir({host,chamar,el,btn}){
  const resumo=grupos().map(g=>'Grupo '+g+' · '+materiais[escolhas[g-1].value]+(ordem.length?' · lê o Grupo '+ordem[g-1]:'')).join('\n');
  if(confirm(resumo+'\nGuardar esta distribuição?')){await oficina('configurar',{materiais:Object.fromEntries(escolhas.map((m,i)=>[i+1,m.value])),pares:ordem});await atualizar();}
  }));
- const controle=secao('Acesso, etapas e tempo');controle.append(acao(meta.session.published?'Suspender acesso':'Liberar acesso às participantes',async()=>{if(confirm('Confirmar a mudança de acesso desta sessão?')){await api('publish',{published:!meta.session.published});await atualizar();}}));
+ const controle=secao('Acesso, etapas e tempo');if(!meta.session.is_test)controle.append(acao(meta.session.published?'Suspender acesso':'Liberar acesso às participantes',async()=>{if(confirm('Confirmar a mudança de acesso desta sessão?')){await api('publish',{published:!meta.session.published});await atualizar();}}));
  if(d.sala.fase<8)controle.append(acao('Iniciar '+fases[d.sala.fase+1],async()=>{const resumo=d.sala.fase===3?'\n'+grupos().map(g=>'Grupo '+g+' lê Grupo '+(d.sala.pares[g-1]||'—')).join('\n'):'';if(confirm('Liberar '+fases[d.sala.fase+1]+'?'+resumo)){await oficina('avancar');await atualizar();}}));
  if(d.sala.fase>=1&&d.sala.fase<=6){const out=el('output');controle.append(out);
  const tick=()=>{if(!host.isConnected){clearInterval(timer);return;}const agora=d.sala.pausa?Date.parse(d.sala.pausa):Date.parse(d.agora)+Date.now()-agoraLocal;const seg=Math.max(0,d.sala.segundos-Math.floor((agora-Date.parse(d.sala.inicio))/1000));out.textContent=(d.sala.pausa?'Pausado · ':'')+Math.floor(seg/60)+':'+String(seg%60).padStart(2,'0')+(seg?'':' · Escrita aberta');};tick();timer=setInterval(tick,1000);
@@ -81,6 +81,8 @@ export async function abrir({host,chamar,el,btn}){
  function escrever(box,itens){for(const [q,r] of itens)box.append(el('h4',q),el('p',r||'','read'));}
  function plenaria(){host.append(el('h2','Plenária · E2–E3 integrados'));const sel=escolha(grupos().map(g=>[g,'Grupo '+g]),grupoTela);campo(host,'Apresentar',sel);sel.onchange=()=>{grupoTela=Number(sel.value);desenhar();};
  host.append(el('h3',materiais[d.sala.materiais[grupoTela]]||'Materialidade a definir'));for(const b of projecao(d,grupoTela)){const box=el('section',undefined,'card');host.append(box);box.append(el('h3',blocos[b.bloco]));for(const v of b.versoes){box.append(el('small','Grupo '+v.grupo+' · Versão '+v.versao));escrever(box,v.campos);}}
+ host.append(acao('Exportar plenária em PDF',()=>window.print()));
  host.append(acao('Voltar à consulta privada',()=>{projetando=false;desenhar();}));}
  await listar();
 }
+

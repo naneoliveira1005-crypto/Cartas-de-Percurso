@@ -364,6 +364,7 @@ openModule=function(m){if(data?.participante?.codigo?.startsWith('ORI')){abrirVi
 /* A capa é a primeira tela para todas as participantes.
    O token pessoal permanece restrito à sessão e só abre o percurso após clique. */
 (async()=>{
+ if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js')).entrar({host:app,el,btn,pesquisadora:false});return;}
  const u=new URL(location.href);
  const hash=new URLSearchParams(u.hash.slice(1));
  const incoming=(u.searchParams.get('token')||hash.get('token')||hash.get('chave')||'').trim();
@@ -402,3 +403,4 @@ openModule=function(m){if(data?.participante?.codigo?.startsWith('ORI')){abrirVi
   }
  });
 })();
+

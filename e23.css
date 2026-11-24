@@ -8,3 +8,6 @@
 .e23 iframe{display:block;width:100%;margin:.75rem 0}
 .e23 button{margin:.25rem .4rem .25rem 0}
 @media(max-width:600px){.e23-materials{grid-template-columns:minmax(0,1fr)}.e23 button,.e23 select{max-width:100%}}
+
+
+@media print{header,footer,nav,aside,button,label,select,.toolbar{display:none!important}.e23,.e23 .card,.e23 .read{height:auto;max-height:none;overflow:visible}.e23 .read{white-space:pre-wrap;overflow-wrap:anywhere}}

@@ -19,8 +19,8 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  const indicador=el('p','','e23-status');indicador.setAttribute('role','status');
  function botao(texto,fn){const b=el('button',texto);b.type='button';b.onclick=async()=>{b.disabled=true;try{await fn();}catch(e){indicador.textContent='Erro: '+e.message;}finally{b.disabled=false;}};return b;}
  const lista=await api('sessions');
- if(lista.actor?.role!=='participante'||lista.actor.is_test)throw Error('Este percurso requer o acesso individual de uma coordenadora.');
- const sessoes=lista.sessions.filter(x=>x.published&&!x.is_test);
+ if(lista.actor?.role!=='participante')throw Error('Este percurso requer o acesso individual de uma coordenadora.');
+ const sessoes=lista.sessions.filter(x=>lista.actor.is_test?x.is_test&&x.id===lista.actor.session_id:x.published&&!x.is_test);
  if(!sessoes.length){host.replaceChildren(el('h2','E2–E3 integrados'),el('p','O encontro será disponibilizado pela pesquisadora.'));return;}
  async function iniciar(id){sid=id;[sala,meta]=await Promise.all([oficina(),api('load')]);c=await conteudo();if(!host.isConnected)return;draw();monitorar();}
  if(sessoes.length===1)await iniciar(sessoes[0].id);
@@ -65,6 +65,7 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(f===0){
  const box=el('section',undefined,'e23-materials');host.append(box);
  for(const [i,m] of c.materiais.entries()){const card=el('article',undefined,'e23-material');card.append(el('h3',m.titulo),el('p',m.contexto));
+ if(codigos[i]==='C'&&!meta.materials?.some(v=>v.code==='C'&&v.status==='conferido')){card.append(el('p','Resultados municipais do Ciclo III em preparação.'));box.append(card);continue;}
  const escolhida=registro(0,-1)?.dados[0]===codigos[i];
  card.append(botao(escolhida?'Escolhida':'Escolher esta materialidade',async()=>{if(operando)return;operando=true;indicador.textContent='Salvando';try{sala=await oficina('salvar',{bloco:-1,versao:registro(0,-1)?.versao||0,dados:[codigos[i]]});indicador.textContent='Salvo';draw();}catch(e){indicador.textContent=erro(e);}finally{operando=false;}}));box.append(card);}return;
  }
@@ -131,3 +132,4 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(autor&&b>0&&r?.finalizado&&!revisando)sec.append(botao('Iniciar revisão',()=>{if(ativos.size){st.textContent='Salve as alterações em andamento.';indicador.textContent=st.textContent;return;}edit={o,b};draw();}));
  }
 }
+
