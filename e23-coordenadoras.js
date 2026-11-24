@@ -22,6 +22,9 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  if(lista.actor?.role!=='participante')throw Error('Este percurso requer o acesso individual de uma coordenadora.');
  const sessoes=lista.sessions.filter(x=>lista.actor.is_test?x.is_test&&x.id===lista.actor.session_id:x.published&&!x.is_test);
  if(!sessoes.length){host.replaceChildren(el('h2','E2–E3 integrados'),el('p','O encontro será disponibilizado pela pesquisadora.'));return;}
+ let etapaVisivel, faseAnterior, destino, navegacao;
+ const liberacao=[2,4,5,5,6];
+ const orientacoes=['Leiam a materialidade e registrem juntos o que observam.','Leiam a análise do grupo parceiro e preparem a interlocução.','Leiam as perguntas recebidas e construam as respostas do grupo.','Retomem a análise inicial à luz da conversa com as colegas.','Registrem o que o grupo considera importante para o Referencial.'];
  async function iniciar(id){sid=id;[sala,meta]=await Promise.all([oficina(),api('load')]);c=await conteudo();if(!host.isConnected)return;draw();monitorar();}
  if(sessoes.length===1)await iniciar(sessoes[0].id);
  else{host.replaceChildren(el('h2','E2–E3 integrados'),indicador);for(const s of sessoes)host.append(botao(s.title,()=>iniciar(s.id)));}
@@ -51,9 +54,6 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  }));
  return m;
  }
- let etapaVisivel, faseAnterior, destino, navegacao;
- const liberacao=[2,4,5,5,6];
- const orientacoes=['Leiam a materialidade e registrem juntos o que observam.','Leiam a análise do grupo parceiro e preparem a interlocução.','Leiam as perguntas recebidas e construam as respostas do grupo.','Retomem a análise inicial à luz da conversa com as colegas.','Registrem o que o grupo considera importante para o Referencial.'];
  function draw(){
  for(const stop of limpezas)stop();limpezas.clear();
  ultimo=assinatura(sala);const f=sala.sala.fase,g=sala.grupo;
