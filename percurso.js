@@ -193,11 +193,36 @@ function modulosDaCoordenadora(){
 }
 async function abrirOficina(){
  encontroAtual='e23';montarParticipante();
- const host=el('section',undefined,'e23');app.append(host);
+ const host=el('section',undefined,'e23');
+ const orientacoes=el('section',undefined,'e23');
+ orientacoes.hidden=true;
+ const fluxo=el('img');
+ fluxo.src='fluxo-oficina-e23.png?v=fechamento-plenaria';
+ fluxo.alt='Fluxo da oficina E2–E3: escolha da materialidade, escrita individual, produção coletiva, circulação e plenária.';
+ fluxo.style.cssText='display:block;width:100%;height:auto';
+ const continuar=btn('Seguir para a oficina',()=>{
+   orientacoes.hidden=true;
+   host.hidden=false;
+   host.scrollIntoView({block:'start'});
+ });
+ orientacoes.append(el('h2','Oficina E2–E3'),fluxo,continuar);
+ app.append(orientacoes,host);
+ const voltarAoFluxo=()=>{
+   if(!leave())return;
+   host.hidden=true;
+   orientacoes.hidden=false;
+   orientacoes.scrollIntoView({block:'start'});
+   continuar.focus({preventScroll:true});
+ };
+ for(const voltar of app.parentElement.querySelectorAll('.percurso-voltar')){
+   voltar.title='Voltar ao início do fluxo da oficina';
+   voltar.setAttribute('aria-label',voltar.title);
+   voltar.onclick=voltarAoFluxo;
+ }
  const chave=token;
  try{
-   const modulo=await import('./e23-coordenadoras.js?v=tempo-automatico');
-   if(host.isConnected)await modulo.abrir({host,rpc,chave,el,onDirty:v=>{if(host.isConnected)dirty=v;}});
+   const modulo=await import('./e23-coordenadoras.js?v=voltar-ao-fluxo');
+   if(host.isConnected)await modulo.abrir({host,rpc,chave,el,voltarAoFluxo,onDirty:v=>{if(host.isConnected)dirty=v;}});
  }catch(e){if(host.isConnected)host.replaceChildren(el('p','Erro ao carregar a oficina. '+e.message,'notice'),btn('Tentar novamente',abrirOficina));}
 }
 function montarParticipante(){const observadora=!!data?.participante?.codigo?.startsWith('OBS'),orientadora=!!data?.participante?.codigo?.startsWith('ORI');app=montarPainel({modulos:observadora||orientadora?data.modulos:modulosDaCoordenadora(),selecionado:encontroAtual,nome:data.participante.nome,pesquisadora:false,observadora,orientadora,navegar:id=>{if(!leave())return false;if(id==='inicio')home();else if(id==='mapa'){encontroAtual=id;montarParticipante();app.append(montarMapaPorEscrito(abrirOficina));}else if(id==='e23')abrirOficina();else if(id==='sobre_pesquisadora'){encontroAtual=id;montarParticipante();app.append(montarPerfilPesquisadora());}else if(id==='orientacao')abrirOrientacao();else openModule((observadora||orientadora?data.modulos:modulosDaCoordenadora()).find(m=>m.id===id));},sair:()=>{if(!leave())return;sessionStorage.removeItem('percurso_chave');token='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();}});}
