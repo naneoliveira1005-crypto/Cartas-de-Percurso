@@ -35,9 +35,10 @@ export async function abrir({host,chamar,el,btn}){
  function escolha(items,val){const s=el('select');for(const [k,t] of items){const o=el('option',t);o.value=k;s.append(o);}s.value=String(val??'');return s;}
  function campo(box,label,elem){const l=el('label',label+' ');l.append(elem);box.append(l);}
  function secao(t){const box=el('details',undefined,'card');box.open=secaoAberta.has(t);box.append(el('summary',t));box.ontoggle=()=>{if(box.isConnected){if(box.open)secaoAberta.add(t);else secaoAberta.delete(t);}};host.append(box);return box;}
- async function listar(){
+ async function listar(abrirUnica=false){
  const l=await api('sessions');if(l.actor?.role!=='pesquisadora')throw Error('Acesso reservado à pesquisadora.');
  host.replaceChildren(el('h2','E2–E3 integrados'));if(l.actor.is_test){await entrar(l.actor.session_id);return;}const oficiais=l.sessions.filter(s=>!s.is_test);
+ if(abrirUnica&&oficiais.length===1){await entrar(oficiais[0].id);return;}
  for(const s of oficiais)host.append(acao(s.title+' · '+(s.published?'Liberada':'Fechada'),()=>entrar(s.id)));
  if(!oficiais.some(s=>s.title===titulo))host.append(acao('Criar sessão fechada de 25/11/2026',async()=>{const sessao=await api('create_session',{title:titulo,is_test:false});await entrar(sessao.id);}));
  }
@@ -156,6 +157,6 @@ export async function abrir({host,chamar,el,btn}){
  if(proposta&&['A','B','C'].includes(d.sala.materiais[grupoTela]))host.append(exportarProposta(grupoTela,proposta.registro.dados));
  host.append(acao('Exportar plenária em PDF',()=>window.print()));
  host.append(acao('Voltar à consulta privada',()=>{projetando=false;desenhar();}));}
- await listar();
+ await listar(true);
 }
 
