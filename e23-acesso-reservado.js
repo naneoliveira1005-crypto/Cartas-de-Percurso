@@ -103,7 +103,27 @@ export async function entrar({host,el,btn,pesquisadora}){
      abertura.append(apresentacao,btn('Seguir para a oficina',()=>{abertura.replaceWith(oficina);oficina.scrollIntoView({block:'start'});}));
      painel.append(abertura);
    }
-   if(pagina==='e23'&&pesquisadora){
+   if(pagina==='e23'&&pesquisadora)painel.append(montarFluxoPesquisadora({el,btn,oficina,l,rpc}));
+ }
+ exibir('inicio');
+ sessionStorage.setItem(slot,token);
+ oficina.textContent='Carregando oficina…';
+ if(pesquisadora)await (await import('./e23-pesquisadora.js?v=baixar-registro-pdf')).abrir({host:oficina,chamar:rpc,el,btn});
+ else{
+   // A oficina das coordenadoras inicia quando seu espaço entra na página.
+   const observar=new MutationObserver(async()=>{
+     if(!oficina.isConnected)return;
+     observar.disconnect();
+     try{await (await import('./e23-coordenadoras.js?v=fechamento-plenaria')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
+     catch(e){oficina.textContent=e.message;}
+   });
+   observar.observe(host,{subtree:true,childList:true});
+ }
+ }catch(e){form();status.textContent=e.message;}};
+ const form=()=>host.replaceChildren(label,btn('Entrar na oficina',()=>abrir(campo.value.trim())),status);form();if(chave)await abrir(chave);
+}
+
+export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf}){
      const area=el('section');
      let materialEscolhido;
      const rascunhosProposta=[[],[],[]];
@@ -166,14 +186,18 @@ export async function entrar({host,el,btn,pesquisadora}){
        const olhar=btn('O olhar das colegas',mostrarCirculacao);
        olhar.style.cssText='position:absolute;left:22.25%;top:31.34%;width:17.42%;height:25.70%;padding:.5%;margin:0;background:#f3e5c8;color:#173d34;border:1px solid #b58a3c;border-radius:8px;font-size:clamp(8px,1.25vw,17px);line-height:1.15;text-decoration:underline';
        fluxoColetivo.append(olhar);
-       area.replaceChildren(topo,trilha,fluxoColetivo);
+       area.replaceChildren(topo,trilha,fluxoColetivo,btn('Acompanhar a oficina',()=>area.replaceChildren(btn('Voltar ao fluxo da oficina',inicioOficina),oficina)));
      }
      function mostrarCirculacao(){
        const voltar=btn('Voltar ao fluxo da oficina',inicioOficina);
        const previa=el('section',undefined,'e23 oficina-painel');
        const areas=el('div',undefined,'oficina-areas');
        const consulta=el('section',undefined,'oficina-consulta');
-       consulta.append(el('h3','Grupo leitor · 2'),el('p','Proposta do Grupo 1 · Materialidade A — Planejamento da Educação Infantil'),consultasColegas(el,'B','A'));
+       consulta.append(el('h3','Grupo leitor · 2'),el('p','Proposta do Grupo 1 · Materialidade A — Planejamento da Educação Infantil'),carregarPdf ? el('div') : consultasColegas(el,'B','A'));
+       if(carregarPdf)for(const [codigo,titulo] of [['A','Consultar materialidade das colegas'],['B','Consultar nossa materialidade']]){
+         const pdf=el('iframe');pdf.title=titulo;pdf.className='e23-source';pdf.hidden=true;
+         consulta.append(btn(titulo,async()=>{pdf.src=await carregarPdf(codigo);pdf.hidden=false;}),pdf);
+       }
        const perguntas=perguntasDaProposta('A');
        for(const [i,pergunta] of perguntas.entries()){
          consulta.append(el('h4',pergunta),el('p',[
@@ -206,12 +230,13 @@ export async function entrar({host,el,btn,pesquisadora}){
        });
        const indice=materialEscolhido ?? 0;
        const codigo=['A','B','C'][indice];
-       const exportacao=controleExportacaoPropostaM1(el,btn,async()=>{
+       const exportacao=carregarPdf ? undefined : controleExportacaoPropostaM1(el,btn,async()=>{
          const ensaio=l.sessions.find(s=>s.id===l.actor.session_id);
          const dados=await rpc('oficina_integrada',{p_sid:l.actor.session_id,p_acao:'ler',p:{}});
          return propostasSalvasM1(dados,ensaio?.title,codigo);
        },codigo);
        const proposta=conferirPropostaM1(el,rascunhosProposta[indice],codigo,exportacao);
+       if(carregarPdf){const pdf=proposta.querySelector('iframe');pdf.removeAttribute('src');carregarPdf(codigo).then(url=>{pdf.src=url;}).catch(()=>pdf.replaceWith(el('p','Não foi possível abrir a materialidade.')));}
        area.replaceChildren(voltar,proposta);
        voltar.focus();
      }
@@ -227,8 +252,8 @@ export async function entrar({host,el,btn,pesquisadora}){
        const escrita=el('section',undefined,'oficina-escrita');
        const areas=el('div',undefined,'oficina-areas');
        const tela=el('section',undefined,'e23 oficina-painel');
-       const pdf=el('iframe');pdf.src='materialidades/'+material.pdf;pdf.title=material.titulo;pdf.className='e23-source';
-       const ampliar=el('a','Ampliar PDF');ampliar.href=pdf.src;ampliar.target='_blank';ampliar.rel='noopener noreferrer';
+       const pdf=el('iframe');if(!carregarPdf)pdf.src='materialidades/'+material.pdf;pdf.title=material.titulo;pdf.className='e23-source';
+       const ampliar=el('a','Ampliar PDF');if(!carregarPdf)ampliar.href=pdf.src;else{ampliar.hidden=true;carregarPdf(['A','B','C'][indice]).then(url=>{pdf.src=url;ampliar.href=url;ampliar.hidden=false;}).catch(()=>pdf.replaceWith(el('p','Não foi possível abrir a materialidade.')));}ampliar.target='_blank';ampliar.rel='noopener noreferrer';
        consulta.append(el('h3','Materialidade em análise'),ampliar,pdf);
        escrita.append(el('h3','Questões para análise','oficina-registro-titulo'),el('p','Campos para conferência. O texto fica nesta aba e não é enviado à oficina.'));
        const guia=el('section',undefined,'oficina-orientacao');
@@ -262,23 +287,5 @@ export async function entrar({host,el,btn,pesquisadora}){
        if(typeof E23_CONTEUDO!=='undefined')preencher();
        else{const script=document.createElement('script');script.src='e23-conteudo.js';script.onload=preencher;script.onerror=()=>escrita.append(el('p','Não foi possível carregar as perguntas.'));document.head.append(script);}
      }
-     inicioOficina();painel.append(area);
-   }
- }
- exibir('inicio');
- sessionStorage.setItem(slot,token);
- oficina.textContent='Carregando oficina…';
- if(pesquisadora)await (await import('./e23-pesquisadora.js?v=baixar-registro-pdf')).abrir({host:oficina,chamar:rpc,el,btn});
- else{
-   // A oficina das coordenadoras inicia quando seu espaço entra na página.
-   const observar=new MutationObserver(async()=>{
-     if(!oficina.isConnected)return;
-     observar.disconnect();
-     try{await (await import('./e23-coordenadoras.js?v=fechamento-plenaria')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
-     catch(e){oficina.textContent=e.message;}
-   });
-   observar.observe(host,{subtree:true,childList:true});
- }
- }catch(e){form();status.textContent=e.message;}};
- const form=()=>host.replaceChildren(label,btn('Entrar na oficina',()=>abrir(campo.value.trim())),status);form();if(chave)await abrir(chave);
+     inicioOficina();return area;
 }
