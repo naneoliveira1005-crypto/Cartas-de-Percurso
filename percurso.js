@@ -195,7 +195,7 @@ async function abrirOficina(){
  encontroAtual='e23';montarParticipante();
  const host=el('section',undefined,'e23');
  const orientacoes=el('section',undefined,'e23');
- orientacoes.hidden=true;
+ host.hidden=true;
  const fluxo=el('img');
  fluxo.src='fluxo-oficina-e23.png?v=oficina';
  fluxo.alt='Fluxo da oficina E2–E3: escolha da materialidade, escrita individual, produção coletiva, circulação e plenária.';
@@ -203,13 +203,17 @@ async function abrirOficina(){
  const continuar=btn('Seguir para a oficina',()=>{
    orientacoes.hidden=true;
    host.hidden=false;
+   voltarInterno.hidden=false;
    host.scrollIntoView({block:'start'});
  });
  orientacoes.append(el('h2','Oficina E2–E3'),fluxo,continuar);
- app.append(orientacoes,host);
+ const voltarInterno=btn('← Voltar ao fluxo da oficina',()=>voltarAoFluxo(),true);
+ voltarInterno.hidden=true;
+ app.append(orientacoes,voltarInterno,host);
  const voltarAoFluxo=()=>{
    if(!leave())return;
    host.hidden=true;
+   voltarInterno.hidden=true;
    orientacoes.hidden=false;
    orientacoes.scrollIntoView({block:'start'});
    continuar.focus({preventScroll:true});
