@@ -197,7 +197,7 @@ async function abrirOficina(){
  const orientacoes=el('section',undefined,'e23');
  orientacoes.hidden=true;
  const fluxo=el('img');
- fluxo.src='fluxo-oficina-e23.png?v=fechamento-plenaria';
+ fluxo.src='fluxo-oficina-e23.png?v=oficina';
  fluxo.alt='Fluxo da oficina E2–E3: escolha da materialidade, escrita individual, produção coletiva, circulação e plenária.';
  fluxo.style.cssText='display:block;width:100%;height:auto';
  const continuar=btn('Seguir para a oficina',()=>{
@@ -392,7 +392,7 @@ openModule=function(m){if(!m)return;if(data?.participante?.codigo?.startsWith('O
 /* A capa é a primeira tela para todas as participantes.
    O token pessoal permanece restrito à sessão e só abre o percurso após clique. */
 (async()=>{
- if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=fechamento-plenaria')).entrar({host:app,el,btn,pesquisadora:false});return;}
+ if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=oficina-ver-voltar')).entrar({host:app,el,btn,pesquisadora:false});return;}
  const u=new URL(location.href);
  const hash=new URLSearchParams(u.hash.slice(1));
  const incoming=(u.searchParams.get('token')||hash.get('token')||hash.get('chave')||'').trim();

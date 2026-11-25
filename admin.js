@@ -233,7 +233,7 @@ function render(){
    const {url}=await resp.json();
    return url;
   };
-  import('./e23-acesso-reservado.js?v=voltar-ao-fluxo').then(({montarFluxoPesquisadora})=>{
+  import('./e23-acesso-reservado.js?v=oficina-ver-voltar').then(({montarFluxoPesquisadora})=>{
    if(!host.isConnected)return;
    host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf,registrarVoltar:fn=>{voltarAoFluxo=fn;}}));
    import('./e23-pesquisadora.js?v=fluxo-direto').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
@@ -370,7 +370,7 @@ function render(){
 /* A mesma capa abre o portal reservado da pesquisadora antes de carregar o painel.
    A chave permanece na sessão; só consultar os registros após a entrada explícita. */
 (async()=>{
- if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=percurso-por-etapa')).entrar({host:app,el,btn,pesquisadora:true});return;}
+ if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=oficina-ver-voltar')).entrar({host:app,el,btn,pesquisadora:true});return;}
  const h=new URLSearchParams(location.hash.slice(1));
  chave=h.get('chave')||sessionStorage.getItem('percurso_admin')||'';
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);

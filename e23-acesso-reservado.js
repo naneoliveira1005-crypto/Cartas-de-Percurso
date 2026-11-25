@@ -29,6 +29,11 @@ export async function entrar({host,el,btn,pesquisadora}){
      modulos,selecionado:pagina,nome:l.actor.name,pesquisadora,homologacao:!pesquisadora,
      navegar:exibir,sair:()=>{sessionStorage.removeItem(slot);location.reload();}
    });
+   if(pagina==='e23')for(const voltar of painel.parentElement.querySelectorAll('.percurso-voltar')){
+     voltar.title='Voltar ao início do fluxo da oficina';
+     voltar.setAttribute('aria-label',voltar.title);
+     voltar.onclick=()=>{exibir('e23');document.querySelector('.workspace')?.scrollIntoView({block:'start'});};
+   }
    const secoesReservadas={e4:'E4 — Decisões em situações reais de trabalho',e5:'E5 — Construindo referências para o trabalho da coordenação pedagógica',livre:'Entre encontros',carta:'Carta de Percurso',novidades:'Novidades',orientacao:'Orientação',acessos:'Acessos individuais',admin:'Administração'};
    if(pesquisadora&&Object.hasOwn(secoesReservadas,pagina)){
      const link=el('a','Abrir painel com chave oficial da pesquisadora');
@@ -94,7 +99,7 @@ export async function entrar({host,el,btn,pesquisadora}){
    if(pagina==='e23'&&!pesquisadora){
      const abertura=el('section');
      const imagem=el('img');
-     imagem.src='fluxo-oficina-e23.png?v=fechamento-plenaria';imagem.alt='Fluxo da oficina E2–E3: escolha da materialidade, análise individual, trabalho em grupo e plenária.';
+     imagem.src='fluxo-oficina-e23.png?v=oficina';imagem.alt='Fluxo da oficina E2–E3: escolha da materialidade, análise individual, trabalho em grupo e plenária.';
      imagem.style.cssText='display:block;width:100%;height:auto;margin-bottom:1rem';
      const apresentacao=el('div');apresentacao.style.position='relative';
      const ajuste=el('span');ajuste.setAttribute('aria-hidden','true');
@@ -114,7 +119,7 @@ export async function entrar({host,el,btn,pesquisadora}){
    const observar=new MutationObserver(async()=>{
      if(!oficina.isConnected)return;
      observar.disconnect();
-     try{await (await import('./e23-coordenadoras.js?v=fechamento-plenaria')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
+     try{await (await import('./e23-coordenadoras.js?v=ver-materialidades')).abrir({host:oficina,rpc,chave:token,el,onDirty:()=>{}});}
      catch(e){oficina.textContent=e.message;}
    });
    observar.observe(host,{subtree:true,childList:true});
@@ -128,7 +133,7 @@ export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf,regist
      let materialEscolhido;
      const rascunhosProposta=[[],[],[]];
      function inicioOficina(){
-       const imagem=el('img');imagem.src='fluxo-oficina-e23.png?v=fechamento-plenaria';
+       const imagem=el('img');imagem.src='fluxo-oficina-e23.png?v=oficina';
        imagem.alt='Fluxo da oficina E2–E3';
        imagem.style.cssText='display:block;width:100%;height:auto;margin-bottom:1rem';
        const parte=(inicio,fim,arte)=>{
