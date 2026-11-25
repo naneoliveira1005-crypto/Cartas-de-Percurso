@@ -1,3 +1,4 @@
+import { montarGravador } from './e23-gravacao.js';
 import { baixarRegistroPDF } from './e23-registro-pdf.js';
 import { esquemaPlenaria, mostrarEsquema, baixarPowerPoint } from './e23-plenaria.js';
 import { percursoCompleto, mostrarPercursoCompleto, orientacaoPlenaria } from './e23-fechamento.js?v=percurso-por-etapa';
@@ -29,6 +30,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  if(lista.actor?.role!=='participante')throw Error('Este percurso requer o acesso individual de uma coordenadora.');
  const sessoes=lista.sessions.filter(x=>lista.actor.is_test?x.is_test&&x.id===lista.actor.session_id:x.published&&!x.is_test);
  if(!sessoes.length){host.replaceChildren(el('h2','E2–E3 integrados'),el('p','O encontro será disponibilizado pela pesquisadora.'));return;}
+ const gravador = montarGravador(el);
  let etapaVisivel, faseAnterior, destino, navegacao;
  let inicioIndividual=0, fechamento, rolar=false, consultaCompleta=false;
  const liberacao=[2,4,5,5,6];
@@ -139,6 +141,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  guia.append(el('h3','◎  Orientação da atividade'),orientacao);
  host.classList.add('oficina-painel');
  host.replaceChildren(titulo,guia,faixa,indicador);
+ if(f>=2&&f<7&&(g||individual?.finalizado))host.append(gravador);
  if(rolar){rolar=false;inicioDaEtapa();}
  if(sala.representacao&&f>=1&&f<=2&&individual?.finalizado){
    const aviso=el('p',f===1?'Prepare-se para entrar na sala do seu grupo no Meet. Sua escrita individual continua disponível.':'É hora de ir para a sala do seu grupo no Meet. Você pode continuar sua escrita individual.','notice');
