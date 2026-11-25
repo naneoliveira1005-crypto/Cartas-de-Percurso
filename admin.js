@@ -203,13 +203,29 @@ function render(){
  app=montarPainel({modulos:modulosDoPainel(),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
  if(encontroAtual==='mapa'){app.append(montarMapaPorEscrito(()=>{encontroAtual='e23';render();}));return;}
  if(encontroAtual==='e23'){
-  const host=el('section',undefined,'e23');app.append(host);
+  const abertura=el('section',undefined,'e23');
+  const fluxo=el('img');
+  fluxo.src='fluxo-oficina-e23.png?v=fechamento-plenaria';
+  fluxo.alt='Fluxo da oficina: escolha da materialidade, escrita individual, produção coletiva, circulação e plenária.';
+  fluxo.style.cssText='display:block;width:100%;height:auto;margin-bottom:1rem';
+  const host=el('section',undefined,'e23');
   const credencial=chave;
   const chamar=async(nome,args)=>{
    const resp=await fetch(API+nome,{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:credencial,...args})});
    const valor=await resp.json();if(!resp.ok)throw Error(valor.message||'Falha de conexão');return valor;
   };
-  import('./e23-pesquisadora.js?v=tempo-automatico').then(m=>m.abrir({host,chamar,el,btn})).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});return;
+  const abrirAcompanhamento=btn('Acompanhar a oficina',async()=>{
+   abertura.replaceWith(host);
+   host.textContent='Carregando acompanhamento…';
+   host.scrollIntoView({block:'start'});
+   try{
+    const modulo=await import('./e23-pesquisadora.js?v=tempo-automatico');
+    if(host.isConnected)await modulo.abrir({host,chamar,el,btn});
+   }catch(e){host.replaceChildren(el('p','Erro ao abrir a oficina: '+e.message),btn('Voltar ao fluxo da oficina',()=>host.replaceWith(abertura)));}
+  });
+  abertura.append(fluxo,abrirAcompanhamento);
+  app.append(abertura);
+  return;
  }
  if(veioDeNovidade&&encontroAtual!=='inicio'){const voltar=btn('← Voltar ao início',()=>{veioDeNovidade=false;encontroAtual='inicio';abaAtual='atividade';render();});voltar.classList.add('secondary');const linha=el('div',undefined,'toolbar voltar-notificacao');linha.append(voltar);app.append(linha);}
  if(encontroAtual==='sobre_pesquisadora'){app.append(montarPerfilPesquisadora(true,chave));return;}
