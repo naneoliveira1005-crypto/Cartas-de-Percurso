@@ -1,5 +1,5 @@
 'use strict';
-function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,navegar,sair}){
+function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=false,orientadora=false,homologacao=false,navegar,sair}){
  document.body.classList.add('dashboard');const root=document.getElementById('app');root.replaceChildren();
  const nav=document.createElement('nav');nav.className='sidebar';nav.setAttribute('aria-label','Encontros');
  const paginas=[];
@@ -14,12 +14,13 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
  const perfis=document.createElement('div');perfis.className='nav-profile-pair';nav.append(perfis);
  add('sobre_pesquisadora','Um pouco sobre mim','Nanny Oliveira',perfis);
  const perfilModulo=modulos.find(m=>m.id==='perfil');if(perfilModulo)add('perfil','Muito sobre nós','Minha trajetória',perfis);
- for(const m of modulos.filter(m=>m.id!=='perfil'))add(
+ if(modulos.some(m=>m.id==='e23'))add('mapa','Nosso percurso de construção');
+ for(const m of modulos.filter(m=>!['perfil','mapa'].includes(m.id)))add(
    m.id,
    m.id==='carta'?'Carta de Percurso':m.id==='livre'?'Entre encontros':/^e\d$/.test(m.id)?m.id.toUpperCase():m.titulo,
-   m.id==='carta'?'O que ainda preciso dizer'+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':''):m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora)&&!m.liberado?' · Não liberado':'')
+   m.id==='e23'?'Percurso integrado':m.id==='carta'?'O que ainda preciso dizer'+((pesquisadora||observadora||orientadora||['e4','carta'].includes(m.id))&&m.liberado===false?' · Ainda não liberado':''):m.id==='livre'?'Espaço opcional de comunicação':m.titulo.replace(/^E\d\s*[—–-]\s*/, '')+((pesquisadora||observadora||orientadora||['e4','carta'].includes(m.id))&&m.liberado===false?' · Ainda não liberado':'')
  );
- if(pesquisadora){add('novidades','Novidades','Movimentações recentes');add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
+ if(pesquisadora&&!homologacao){add('novidades','Novidades','Movimentações recentes');add('orientacao','Orientação','Canal com Silvia');add('acessos','Acessos individuais','Links das coordenadoras');add('admin','Administração');}
  if(orientadora)add('orientacao','Orientação','Canal privado com Nanny');
  const content=document.createElement('section');content.className='workspace';const identity=document.createElement('div');identity.className='identity';const n=document.createElement('span');n.textContent=(pesquisadora?'Pesquisadora · ':orientadora?'Orientadora · ':observadora?'Observadora · ':'Meu percurso · ')+nome;const out=document.createElement('button');out.className='secondary';out.textContent='Sair';out.onclick=sair;identity.append(n,out);content.append(identity);const panel=document.createElement('div');panel.id='conteudo';const montarAcoes=posicao=>{
    const barra=document.createElement('nav');
@@ -39,6 +40,21 @@ function montarPainel({modulos,selecionado,nome,pesquisadora=false,observadora=f
    else if(indice>0)barra.append(criarBotao('Início →','inicio',false));
    return barra;
  };
+ if(pesquisadora){
+   const atalhos=document.createElement('nav');
+   atalhos.className='percurso-acoes';
+   atalhos.setAttribute('aria-label','Atalhos da pesquisadora');
+   for(const [id,titulo] of [['carta','Carta de Percurso'],['e4','E4']]){
+     if(!paginas.some(p=>p.id===id))continue;
+     const botao=document.createElement('button');
+     botao.type='button';
+     botao.className='secondary';
+     botao.textContent=titulo;
+     botao.onclick=()=>abrirPagina(id);
+     atalhos.append(botao);
+   }
+   if(atalhos.childElementCount)content.append(atalhos);
+ }
  content.append(montarAcoes('topo'),panel,montarAcoes('final'));
  root.append(nav,content);return panel;
 }
@@ -148,3 +164,19 @@ function montarPortasPerfis(abrirPesquisadora,abrirNos){
  nos.append(b,h2,p2,b2);duo.append(mim,nos);return duo;
 }
 window.montarPainel=montarPainel;window.chaveDoAcesso=chaveDoAcesso;window.montarAberturaPorEscrito=montarAberturaPorEscrito;window.montarPerfilPesquisadora=montarPerfilPesquisadora;window.montarPortasPerfis=montarPortasPerfis;
+
+
+function montarMapaPorEscrito(abrirOficina){
+ const secao=document.createElement('section');
+ secao.className='mapa-percurso';
+ const imagem=document.createElement('img');
+ imagem.src='nosso-percurso.png';
+ imagem.alt='Nosso percurso de construção: E1, E2 e E3 integrados, Carta de Percurso, E4 e E5 e Referencial da Coordenação Pedagógica de Barrocas.';
+ imagem.style.cssText='display:block;width:100%;height:auto';
+ const botao=document.createElement('button');
+ botao.type='button';
+ botao.textContent='Abrir E2–E3 integrados';
+ botao.onclick=abrirOficina;
+ secao.append(imagem,botao);
+ return secao;
+}

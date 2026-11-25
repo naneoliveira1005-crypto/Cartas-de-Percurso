@@ -1,0 +1,71 @@
+.m1-orientacao-mapa {
+  container-type: inline-size;
+  background: #fcf8eb;
+  color: #173d34;
+  border: 1px solid #c6a75d;
+  border-radius: .9rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  margin-block: 0 1rem;
+}
+.m1-orientacao-mapa > h3 { margin: 0 0 .55rem; }
+.m1-orientacao-mapa p { text-align: justify; line-height: 1.55; }
+.m1-orientacao-mapa > p { margin: 0 0 .8rem; }
+.m1-orientacao-mapa > .m1-orientacao-centro {
+  width: fit-content;
+  margin: 1.15rem auto 0;
+  padding: .5rem 1rem;
+  border: 1px solid #c6a75d;
+  border-radius: .6rem;
+  background: #173d34;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+.m1-orientacao-ramos {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .85rem;
+  padding-top: 1.5rem;
+}
+.m1-orientacao-ramos::before {
+  content: '';
+  position: absolute;
+  top: .75rem;
+  left: calc((100% - 1.7rem) / 6);
+  right: calc((100% - 1.7rem) / 6);
+  border-top: 1px solid #aa8235;
+}
+.m1-orientacao-ramos article {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #b3c2a7;
+  border-radius: .65rem;
+  background: #edf3e8;
+  padding: .85rem;
+}
+.m1-orientacao-ramos article:nth-child(2) { background: #fff; }
+.m1-orientacao-ramos article:nth-child(3) { background: #f8eed5; border-color: #d2b67b; }
+.m1-orientacao-ramos article::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  height: .8rem;
+  border-left: 1px solid #aa8235;
+}
+.m1-orientacao-ramos article:nth-child(2)::before { height: 1.55rem; }
+.m1-orientacao-ramos h4 { margin: 0 0 .35rem; }
+.m1-orientacao-mapa[data-materialidade] .m1-orientacao-ramos h4 { text-align: center; }
+.m1-orientacao-ramos p { margin: 0; }
+@container (max-width: 38rem) {
+  .m1-orientacao-ramos { grid-template-columns: 1fr; padding-top: .9rem; }
+  .m1-orientacao-ramos::before,
+  .m1-orientacao-ramos article:not(:first-child)::before { display: none; }
+}
+
+.m1-proposta-textos :is(p:not(.m1-orientacao-centro), .e23-question, textarea) {
+  text-align: justify;
+  hyphens: auto;
+}
+.m1-orientacao-mapa p:not(.m1-orientacao-centro) { hyphens: auto; }

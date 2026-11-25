@@ -188,15 +188,31 @@ function painelNovidades(){
 
 let encontroAtual='inicio',abaAtual='atividade',registroPendente=null,perfilPendente=null,veioDeNovidade=false;
 function sairPainel(){sessionStorage.removeItem('percurso_admin');chave='';data=null;document.body.classList.remove('dashboard');app=document.getElementById('app');login();window.scrollTo({top:0,behavior:'auto'});}
+function modulosDoPainel(){
+ const modulos=data.modulos.filter(m=>['perfil','livre','carta'].includes(m.id)||/^e\d$/.test(m.id)&&!['e2','e3'].includes(m.id));
+ const i=modulos.findIndex(m=>m.id==='e1');
+ modulos.splice(i+1,0,{id:'e23',titulo:'E2–E3 integrados'});
+ return modulos;
+}
 function render(){
- app=montarPainel({modulos:data.modulos.filter(m=>m.id==='perfil'||/^e\d$/.test(m.id)||m.id==='livre'||m.id==='carta'),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ app=montarPainel({modulos:modulosDoPainel(),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ if(encontroAtual==='mapa'){app.append(montarMapaPorEscrito(()=>{encontroAtual='e23';render();}));return;}
+ if(encontroAtual==='e23'){
+  const host=el('section',undefined,'e23');app.append(host);
+  const credencial=chave;
+  const chamar=async(nome,args)=>{
+   const resp=await fetch(API+nome,{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:credencial,...args})});
+   const valor=await resp.json();if(!resp.ok)throw Error(valor.message||'Falha de conexão');return valor;
+  };
+  import('./e23-pesquisadora.js?v=fechamento-plenaria').then(m=>m.abrir({host,chamar,el,btn})).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});return;
+ }
  if(veioDeNovidade&&encontroAtual!=='inicio'){const voltar=btn('← Voltar ao início',()=>{veioDeNovidade=false;encontroAtual='inicio';abaAtual='atividade';render();});voltar.classList.add('secondary');const linha=el('div',undefined,'toolbar voltar-notificacao');linha.append(voltar);app.append(linha);}
  if(encontroAtual==='sobre_pesquisadora'){app.append(montarPerfilPesquisadora(true,chave));return;}
  if(encontroAtual==='novidades'){painelNovidades();return;}
  if(encontroAtual==='orientacao'){painelOrientacao();return;}
  if(encontroAtual==='acessos'){painelAcessos();return;}
  if(encontroAtual==='admin'){renderLegacy();const bar=app.querySelector('.toolbar');if(bar)bar.remove();const views=[...app.querySelectorAll('section')].find(x=>x.querySelector('h2')?.textContent==='Ver as atividades');if(views)views.remove();return;}
- if(encontroAtual==='inicio'){app.append(montarAberturaPorEscrito());painelNovidades();add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of data.modulos.filter(x=>/^e\d$/.test(x.id)||x.id==='livre')){const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));if(n>0)p.append(btn('Ver quem enviou',()=>{encontroAtual=m.id;abaAtual='registros';render();}));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
+ if(encontroAtual==='inicio'){app.append(montarAberturaPorEscrito());painelNovidades();add(app,el('h2','Seu painel de pesquisa'),el('p','Acompanhe os encontros em uma única sequência. Selecione um encontro à esquerda e abra Sobre o encontro, Atividade individual, Registros ou Materiais.'));const summary=el('section',undefined,'card');summary.append(el('h3','Visão geral do percurso'));for(const m of modulosDoPainel().filter(x=>/^e\d$/.test(x.id)||['e23','livre'].includes(x.id))){if(m.id==='e23'){summary.append(btn(m.titulo,()=>{encontroAtual='e23';render();}));continue;}const n=data.registros.filter(r=>r.modulo===m.id).length;const p=el('p');p.append(btn((m.id==='livre'?'Entre encontros':m.id.toUpperCase()+' · '+m.titulo.replace(/^E\d\s*[—–-]\s*/,'')),()=>{encontroAtual=m.id;abaAtual=m.id==='e1'?'sobre':'atividade';render();}));p.append(el('span','  '+(m.liberado?'Liberado':'Não liberado')+' · '+n+' registro(s)','muted'));if(n>0)p.append(btn('Ver quem enviou',()=>{encontroAtual=m.id;abaAtual='registros';render();}));summary.append(p);}app.append(summary,el('p','Administração reúne os cadastros, a liberação de encontros, os materiais e as exportações.','muted'));return;}
  const m=data.modulos.find(x=>x.id===encontroAtual);if(!m)return;
  if(m.id==='perfil'){
   add(app,el('h2','Muito sobre nós'),el('p','Aqui você acompanha os perfis individuais das coordenadoras sem misturá-los aos registros dos encontros. Os dados objetivos vêm da ficha de caracterização; os campos pessoais são complementados no Por Escrito.','muted'));
@@ -320,6 +336,7 @@ function render(){
 /* A mesma capa abre o portal reservado da pesquisadora antes de carregar o painel.
    A chave permanece na sessão; só consultar os registros após a entrada explícita. */
 (async()=>{
+ if(new URLSearchParams(location.search).has('oficina')){await (await import('./e23-acesso-reservado.js?v=percurso-por-etapa')).entrar({host:app,el,btn,pesquisadora:true});return;}
  const h=new URLSearchParams(location.hash.slice(1));
  chave=h.get('chave')||sessionStorage.getItem('percurso_admin')||'';
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);
@@ -358,3 +375,4 @@ function render(){
   }
  });
 })();
+
