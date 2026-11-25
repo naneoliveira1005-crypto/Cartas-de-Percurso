@@ -36,6 +36,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  async function iniciar(id){sid=id;[sala,meta]=await Promise.all([oficina(),api('load')]);c=await conteudo();try{inicioIndividual=Number(localStorage.getItem(chaveRelogio()))||0;}catch{}if(!host.isConnected)return;draw();monitorar();}
  if(sessoes.length===1)await iniciar(sessoes[0].id);
  else{host.replaceChildren(el('h2','E2–E3 integrados'),indicador);for(const s of sessoes)host.append(botao(s.title,()=>iniciar(s.id)));}
+ const numeroVisivel = grupo => sala?.sala?.materiais?.circulacao_duas_salas ? ({4:1,3:2,1:3,2:'anterior 2'}[grupo] ?? grupo) : grupo;
  function assinatura(s){return JSON.stringify([s.sala,s.grupo,s.registros,s.historico_coletivo,s.grupos_ativos]);}
  function monitorar(){
  const timer=setInterval(async()=>{
@@ -96,7 +97,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
    const esquema=esquemaPlenaria(etapas);
    const codigo=sala.sala.materiais[g];
    const materialidade=codigo==='C'?tituloMaterialidadeC:c.materiais[codigos.indexOf(codigo)]?.titulo||'Materialidade do grupo';
-   const powerpoint=()=>botao('Baixar apresentação em PowerPoint',()=>baixarPowerPoint({grupo:g,materialidade,esquema}));
+   const powerpoint=()=>botao('Baixar apresentação em PowerPoint',()=>baixarPowerPoint({grupo:numeroVisivel(g),materialidade,esquema}));
    const sec=el('section',undefined,'card');
    if(fechamento==='plenaria'){
      titulo.replaceChildren(el('h2','Plenária · E2–E3 integrados'));
@@ -106,7 +107,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
      titulo.replaceChildren(el('h2','Concluímos nosso percurso coletivo!'));
      sec.append(el('p','Ao longo deste percurso, analisamos, compartilhamos, dialogamos, revisitamos nossas escolhas e construímos contribuições para o Referencial da Coordenação Pedagógica de Barrocas.'));
      const leitura=mostrarPercursoCompleto(el,etapas);leitura.hidden=!consultaCompleta;
-     sec.append(botao('Consultar nosso percurso completo',()=>{consultaCompleta=!consultaCompleta;leitura.hidden=!consultaCompleta;}),botao('Gerar registro completo em PDF',()=>baixarRegistroPDF({grupo:g,codigo:sala.sala.materiais[g],tituloEncontro:meta.session?.title,etapas})),powerpoint(),leitura,mostrarEsquema(el,esquema));
+     sec.append(botao('Consultar nosso percurso completo',()=>{consultaCompleta=!consultaCompleta;leitura.hidden=!consultaCompleta;}),botao('Gerar registro completo em PDF',()=>baixarRegistroPDF({grupo:numeroVisivel(g),codigo:sala.sala.materiais[g],tituloEncontro:meta.session?.title,etapas})),powerpoint(),leitura,mostrarEsquema(el,esquema));
      sec.append(el('h3','Agora, vamos à plenária!'),el('p',orientacaoPlenaria),botao('Seguir para a plenária',()=>{fechamento='plenaria';draw();inicioDaEtapa();}));
      if(!voltarAoFluxo)sec.append(botao('Voltar aos registros coletivos',()=>{fechamento='registros';etapaVisivel=5;draw();inicioDaEtapa();}));
    }
@@ -131,7 +132,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  const grupoM1=m1&&individual?.finalizado&&g&&((sala.sala.materiais[g]||'A')===escolha);
  const codigoGrupo=f===0?escolha:sala.sala.materiais[g];
  const materialGrupo=c.materiais[codigos.indexOf(codigoGrupo)];
- if(g||materialGrupo)faixa.append(el('strong',[g?'Grupo '+g:'',materialGrupo?'M'+(codigos.indexOf(codigoGrupo)+1)+' · '+materialGrupo.titulo:''].filter(Boolean).join(' · ')));
+ if(g||materialGrupo)faixa.append(el('strong',[g?'Grupo '+numeroVisivel(g):'',materialGrupo?'M'+(codigos.indexOf(codigoGrupo)+1)+' · '+materialGrupo.titulo:''].filter(Boolean).join(' · ')));
  const titulo=el('header',undefined,'oficina-titulo');
  titulo.append(el('h2','Oficina E2 – E3'),el('span','Análise de práticas para a construção do Referencial'));
  if(automatico()&&registro(g,5)?.finalizado&&fechamento!=='registros'){abrirFechamento(g,titulo);if(rolar){rolar=false;inicioDaEtapa();}return;}
@@ -158,7 +159,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
    host.append(el('h3','Espaço do grupo'),el('p',g?'Você é a representante. Compartilhe a tela no Meet quando o trabalho coletivo começar.':'Sua escrita individual foi salva. Somente a pessoa escolhida pelo grupo deve assumir o registro coletivo.'));
    if(!g)for(const grupo of sala.grupos_ativos||[]){
      if(sala.sala.materiais[grupo]!==escolha)continue;
-     host.append(botao('Entrar no Grupo '+grupo,async()=>{
+     host.append(botao('Entrar no Grupo '+numeroVisivel(grupo),async()=>{
        sala=await oficina('entrar_grupo',{grupo});draw();inicioDaEtapa();
      }));
    }
@@ -275,7 +276,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
      const proposta=registro(grupo,1);
      if(!proposta?.finalizado||!historico(grupo,1).some(h=>h.versao===proposta.versao&&h.registro.proposta_m1))continue;
      consulta.append(botao(rotulo,()=>imprimirPropostaM1({
-       grupo,respostas:proposta.dados,codigo:sala.sala.materiais[grupo],tituloEncontro:meta.session?.title
+       grupo:numeroVisivel(grupo),respostas:proposta.dados,codigo:sala.sala.materiais[grupo],tituloEncontro:meta.session?.title
      })));
    }
  }
@@ -285,8 +286,8 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
    const codigo=sala.sala.materiais[parceiro];
    const origem=c.materiais[codigos.indexOf(codigo)];
    const recebida=registro(parceiro,1);
-   consulta.append(el('h3','Grupo leitor · '+g));
-   if(parceiro)consulta.append(el('p','Proposta do Grupo '+parceiro+' · '+(codigo==='C'?tituloMaterialidadeC:origem?.titulo||'Materialidade a definir')));
+   consulta.append(el('h3','Grupo leitor · '+numeroVisivel(g)));
+   if(parceiro)consulta.append(el('p','Proposta do Grupo '+numeroVisivel(parceiro)+' · '+(codigo==='C'?tituloMaterialidadeC:origem?.titulo||'Materialidade a definir')));
    if(!recebida?.finalizado){escrever.append(el('p',parceiro?esperaColegas:'A circulação começa quando houver pelo menos dois grupos constituídos.'));return;}
    destino=escrever;
    const perguntas=historico(parceiro,1).some(h=>h.versao===recebida.versao&&h.registro.proposta_m1)?perguntasDaProposta(codigo):origem?.questoes||[];
@@ -347,7 +348,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  const sec=el('section',undefined,'card e23-panel');
  const leituraParceira=b===1&&o!==g&&etapaVisivel===2;
  const olhar=automatico()&&b===2&&etapaVisivel===2;
- (leituraParceira?destino.previousElementSibling:destino).append(sec);sec.append(el('h3',olhar?'Nossa contribuição à proposta das colegas':proposta?(leituraParceira?tituloPropostaM1:'Produção coletiva do grupo'):titulos[b]),el('p',b===0?'Registro individual privado':'Produção vinculada ao grupo '+o,'muted'));
+ (leituraParceira?destino.previousElementSibling:destino).append(sec);sec.append(el('h3',olhar?'Nossa contribuição à proposta das colegas':proposta?(leituraParceira?tituloPropostaM1:'Produção coletiva do grupo'):titulos[b]),el('p',b===0?'Registro individual privado':'Produção vinculada ao grupo '+numeroVisivel(o),'muted'));
  const codigoProposta=sala.sala.materiais[o]||'A';
  const propostaB=proposta&&codigoProposta==='B'&&!leituraParceira;
  const exportavel=proposta&&autor;
@@ -422,7 +423,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
 
  if(automatico()&&r?.finalizado&&b===4&&sala.sala.fase<6)sec.append(el('p','Revisitação salva. A contribuição para o Referencial abre automaticamente quando os grupos concluírem esta etapa.'));
  if(automatico()&&autor&&r?.finalizado&&b>=1&&b<5&&(b===1||sala.sala.fase>=liberacao[b]))sec.append(botao('Seguir',()=>{etapaVisivel=b+1;draw();inicioDaEtapa();}));
- if(hist.length){const d=el('details');d.append(el('summary','Histórico autorizado'));for(const h of hist){d.append(el('h4','Versão '+h.versao+' · Grupo '+h.grupo_autor+' · '+(h.registro.finalizado?'Finalizada':'Rascunho')),el('small',new Date(h.registrado_em).toLocaleString('pt-BR')));
+ if(hist.length){const d=el('details');d.append(el('summary','Histórico autorizado'));for(const h of hist){d.append(el('h4','Versão '+h.versao+' · Grupo '+numeroVisivel(h.grupo_autor)+' · '+(h.registro.finalizado?'Finalizada':'Rascunho')),el('small',new Date(h.registrado_em).toLocaleString('pt-BR')));
  if(h.registro.perguntas_e_respostas)for(const v of h.registro.perguntas_e_respostas)d.append(el('p',v.pergunta),el('p',v.resposta||'','read'));else for(const v of h.registro.dados)d.append(el('p',v,'read'));}sec.append(d);}
  if(autor&&b>0&&r?.finalizado&&!revisando&&!olhar)sec.append(botao('Iniciar revisão',()=>{if(ativos.size){st.textContent='Salve as alterações em andamento.';indicador.textContent=st.textContent;return;}edit={o,b};draw();}));
  }
