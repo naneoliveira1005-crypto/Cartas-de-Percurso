@@ -207,7 +207,8 @@ async function abrirOficina(){
    host.scrollIntoView({block:'start'});
  });
  orientacoes.append(el('h2','Oficina E2–E3'),fluxo,continuar);
- const voltarInterno=btn('← Voltar ao fluxo da oficina',()=>voltarAoFluxo(),true);
+ const voltarInterno=el('div');
+ voltarInterno.append(btn('← Voltar ao fluxo da oficina',()=>voltarAoFluxo(),true));
  voltarInterno.hidden=true;
  app.append(orientacoes,voltarInterno,host);
  const voltarAoFluxo=()=>{
