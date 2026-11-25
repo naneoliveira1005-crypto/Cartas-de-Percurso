@@ -64,20 +64,29 @@ export async function abrir({host,chamar,el,btn}){
  function desenhar(){
  clearInterval(timer);host.replaceChildren();if(projetando){plenaria();return;}
  host.append(el('h2','E2–E3 integrados'),el('p',meta.session.title),el('p',(meta.session.published?'Acesso liberado':'Acesso fechado')+' · '+fases[d.sala.fase],'notice'));
- host.append(acao('Atualizar acompanhamento',atualizar),acao('Escolher sessão',listar));
+ const fluxo=el('img');
+ fluxo.src='fluxo-oficina-e23.png?v=fechamento-plenaria';
+ fluxo.alt='Fluxo da oficina: escolha da materialidade, escrita individual, produção em grupo, circulação e plenária.';
+ fluxo.style.cssText='display:block;width:100%;height:auto;margin:0 0 1rem';
+ host.append(fluxo,acao('Atualizar acompanhamento',atualizar),acao('Escolher sessão',listar));
  const escolhasAoVivo=el('section',undefined,'card');
  escolhasAoVivo.append(el('h3','Escolhas das coordenadoras'));
+ const escolhasGrade=el('div');
+ escolhasGrade.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.75rem';
  const nomesPorId=new Map(meta.people.filter(p=>p.role==='participante').map(p=>[p.id,p.name]));
  const escolhasPorPessoa=new Map(d.registros.filter(r=>r.bloco===-1&&r.finalizado&&nomesPorId.has(r.autora)).map(r=>[r.autora,r.dados[0]]));
  for(const [codigo,titulo] of [...Object.entries(materiais),['','Ainda sem escolha']]){
    const nomes=[...nomesPorId].filter(([id])=>(escolhasPorPessoa.get(id)||'')===codigo).map(([,nome])=>nome).sort((a,b)=>a.localeCompare(b,'pt-BR'));
-   escolhasAoVivo.append(el('h4',titulo+' · '+nomes.length));
+   const cartao=el('details',undefined,'card');
+   cartao.append(el('summary',titulo+' · '+nomes.length));
    if(nomes.length){
      const lista=el('ul');
      for(const nome of nomes)lista.append(el('li',nome));
-     escolhasAoVivo.append(lista);
-   }
+     cartao.append(lista);
+   }else cartao.append(el('p','Nenhuma escolha registrada.'));
+   escolhasGrade.append(cartao);
  }
+ escolhasAoVivo.append(escolhasGrade);
  host.append(escolhasAoVivo);
  const preparacao=secao('Participantes e composição dos grupos');const livre=d.sala.fase===0;
  const n=escolha(Array.from({length:7},(_,i)=>[i+1,(i+1)+' grupo(s)']),meta.session.group_count||4);n.disabled=!livre;campo(preparacao,'Quantidade de grupos',n);
