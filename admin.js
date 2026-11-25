@@ -236,7 +236,7 @@ function render(){
   import('./e23-acesso-reservado.js?v=oficina-ver-voltar').then(({montarFluxoPesquisadora})=>{
    if(!host.isConnected)return;
    host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf,registrarVoltar:fn=>{voltarAoFluxo=fn;}}));
-   import('./e23-pesquisadora.js?v=fluxo-direto').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
+   import('./e23-pesquisadora.js?v=salas-25nov').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
   }).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});
   return;
  }
