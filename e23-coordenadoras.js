@@ -133,7 +133,7 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  host.classList.add('oficina-painel');
  host.replaceChildren(titulo,guia,faixa,indicador);
  if(rolar){rolar=false;inicioDaEtapa();}
- if(sala.representacao&&f>=1){
+ if(sala.representacao&&f>=1&&f<=2&&individual?.finalizado){
    const aviso=el('p',f===1?'Prepare-se para entrar na sala do seu grupo no Meet. Sua escrita individual continua disponível.':'É hora de ir para a sala do seu grupo no Meet. Você pode continuar sua escrita individual.','notice');
    if(f===1){
      const contagem=el('output');const base=Date.now();const servidor=Date.parse(sala.agora);
@@ -193,7 +193,7 @@ export async function abrir({host,rpc,chave,el,onDirty}){
  out.textContent='Tempo da oficina: '+(sala.sala.pausa?'Pausado · ':'')+Math.floor(n/60)+':'+String(n%60).padStart(2,'0')+(n===0?' · A escrita continua aberta.':'');};
  tick();faixa.append(out);const t=setInterval(tick,1000);limpezas.add(()=>clearInterval(t));
  }
- if((f===0||sala.representacao&&f===1)&&!grupoM1){
+ if((f===0||sala.representacao&&f<=7&&!escolha)&&!grupoM1){
  const areas=el('div',undefined,'oficina-areas');
  const consulta=el('section',undefined,'oficina-consulta');
  const escolhaBox=el('section',undefined,'oficina-materialidades');

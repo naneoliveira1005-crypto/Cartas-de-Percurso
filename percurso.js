@@ -196,7 +196,7 @@ async function abrirOficina(){
  const host=el('section',undefined,'e23');app.append(host);
  const chave=token;
  try{
-   const modulo=await import('./e23-coordenadoras.js?v=fechamento-plenaria');
+   const modulo=await import('./e23-coordenadoras.js?v=tempo-automatico');
    if(host.isConnected)await modulo.abrir({host,rpc,chave,el,onDirty:v=>{if(host.isConnected)dirty=v;}});
  }catch(e){if(host.isConnected)host.replaceChildren(el('p','Erro ao carregar a oficina. '+e.message,'notice'),btn('Tentar novamente',abrirOficina));}
 }

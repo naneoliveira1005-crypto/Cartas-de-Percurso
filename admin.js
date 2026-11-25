@@ -204,7 +204,7 @@ function render(){
    const resp=await fetch(API+nome,{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:credencial,...args})});
    const valor=await resp.json();if(!resp.ok)throw Error(valor.message||'Falha de conexão');return valor;
   };
-  import('./e23-pesquisadora.js?v=fechamento-plenaria').then(m=>m.abrir({host,chamar,el,btn})).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});return;
+  import('./e23-pesquisadora.js?v=tempo-automatico').then(m=>m.abrir({host,chamar,el,btn})).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});return;
  }
  if(veioDeNovidade&&encontroAtual!=='inicio'){const voltar=btn('← Voltar ao início',()=>{veioDeNovidade=false;encontroAtual='inicio';abaAtual='atividade';render();});voltar.classList.add('secondary');const linha=el('div',undefined,'toolbar voltar-notificacao');linha.append(voltar);app.append(linha);}
  if(encontroAtual==='sobre_pesquisadora'){app.append(montarPerfilPesquisadora(true,chave));return;}

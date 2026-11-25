@@ -100,9 +100,7 @@ export async function abrir({host,chamar,el,btn}){
  if(confirm(resumo+'\nGuardar esta distribuição?')){await oficina('configurar',{materiais:Object.fromEntries(escolhas.map((m,i)=>[i+1,m.value])),pares:painelAutomatico()&&grupos().length>1?grupos().map(g=>g===1?grupos().length:g-1):ordem});await atualizar();}
  }));
  const controle=secao('Acesso, etapas e tempo');if(!meta.session.is_test)controle.append(acao(meta.session.published?'Suspender acesso':'Liberar acesso às participantes',async()=>{if(confirm('Confirmar a mudança de acesso desta sessão?')){await api('publish',{published:!meta.session.published});await atualizar();}}));
- if(d.representacao&&livre&&meta.session.published)controle.append(acao('Avisar ida aos grupos em 2 minutos',async()=>{
-   if(confirm('Iniciar o aviso de dois minutos para a ida aos grupos?')){await oficina('avancar');await atualizar();}
- }));
+ if(d.representacao)controle.append(el('p','Os tempos iniciam automaticamente no percurso das coordenadoras.','muted'));
  if(!d.representacao&&!painelAutomatico()&&d.sala.fase<8)controle.append(acao('Iniciar '+fases[d.sala.fase+1],async()=>{const resumo=d.sala.fase===3?'\n'+grupos().map(g=>'Grupo '+g+' lê Grupo '+(d.sala.pares[g-1]||'—')).join('\n'):'';if(confirm('Liberar '+fases[d.sala.fase+1]+'?'+resumo)){await oficina('avancar');await atualizar();}}));
  if(d.sala.fase>=1&&d.sala.fase<=6){const out=el('output');controle.append(out);
  const tick=()=>{if(!host.isConnected){clearInterval(timer);return;}const agora=d.sala.pausa?Date.parse(d.sala.pausa):Date.parse(d.agora)+Date.now()-agoraLocal;const seg=Math.max(0,d.sala.segundos-Math.floor((agora-Date.parse(d.sala.inicio))/1000));out.textContent=(d.sala.pausa?'Pausado · ':'')+Math.floor(seg/60)+':'+String(seg%60).padStart(2,'0')+(seg?'':' · Escrita aberta');};tick();timer=setInterval(tick,1000);
