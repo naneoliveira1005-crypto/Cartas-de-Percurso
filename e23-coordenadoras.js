@@ -49,7 +49,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  }
  function historico(o,b){return (sala.historico_coletivo||[]).filter(h=>h.origem===o&&h.bloco===b).sort((a,b)=>a.versao-b.versao);}
  function registro(o,b){return sala.registros.find(r=>r.origem===o&&r.bloco===b);}
- function material(codigo,box){
+ function material(codigo,box,abrirPdf=false){
  const m=c.materiais[codigos.indexOf(codigo)];
  if(!m)return null;
  box.append(el('h3',codigo==='C'&&lista.actor.is_test?tituloMaterialidadeC:m.titulo),el('p',m.contexto,'e23-context'));
@@ -60,11 +60,17 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  const frame=el('iframe');frame.title=m.titulo;frame.src=link.href;frame.className='e23-source';
  box.append(link,frame);return m;
  }else if(!arquivos.length)box.append(el('p','Arquivo em preparação.','muted'));
- for(const f of arquivos)box.append(botao('Abrir '+f.name,async()=>{
+ for(const [i,f] of arquivos.entries()){
+ const abrir=async()=>{
   const r=await fetch('https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/por-escrito-e23-files',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:chave,session_id:sid,file_id:f.id})});if(!r.ok)throw Error('Arquivo indisponível.');const {url}=await r.json();if(!/^https:\/\//.test(url))throw Error('Arquivo indisponível.');
   let frame=box.querySelector('iframe');if(!frame){frame=el('iframe');frame.className='e23-source';frame.referrerPolicy='no-referrer';box.append(frame);}frame.title=f.name;frame.src=url;
   const a=el('a','Abrir em outra aba');a.href=url;a.target='_blank';a.rel='noopener noreferrer';box.append(a);
- }));
+ };
+ if(abrirPdf&&i===0){
+  const estado=el('p','Carregando PDF…');estado.setAttribute('role','status');box.append(estado);
+  abrir().then(()=>estado.remove()).catch(()=>{estado.textContent='Não foi possível abrir o PDF. Tente novamente.';box.append(botao('Abrir '+f.name,abrir));});
+ }else box.append(botao('Abrir '+f.name,abrir));
+ }
  return m;
  }
  function automatico(){return sala?.representacao===true||lista.actor.is_test&&['d79ace19-ee80-472e-8585-16784465cd6f','4020eeaf-85e5-4e83-bda1-6e5810d65686'].includes(sid);}
@@ -209,7 +215,7 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
    host.append(areas);
  }
  else consulta.append(el('p','Escolha uma materialidade para consultar o documento.'));
- escolhaBox.append(el('h3','Escolha da materialidade'),box);
+ escolhaBox.append(el('h3','Escolha da materialidade'),el('p','Consulte as três materialidades antes de escolher qual vai analisar.'),box);
  if(!escolha||automatico())host.append(escolhaBox);
  for(const [i,m] of c.materiais.entries()){const card=el('article',undefined,'e23-material');card.append(el('small','M'+(i+1)),el('h3',m.titulo));
  if(codigos[i]==='C'&&!automatico()&&!meta.materials?.some(v=>v.code==='C'&&v.status==='conferido')){card.append(el('p','Resultados municipais do Ciclo II em preparação.'));box.append(card);continue;}
@@ -220,6 +226,18 @@ export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
    host.append(el('p','Escolha salva. A análise individual abre quando as colegas também confirmarem a escolha.'));
    return;
  }
+ card.append(botao('Ver materialidade',()=>{
+   const previa=el('dialog');
+   previa.setAttribute('aria-label',m.titulo);
+   previa.style.cssText='width:min(94vw,1100px);max-height:90dvh;box-sizing:border-box';
+   const voltar=botao('Voltar às materialidades',()=>previa.close());
+   const documento=el('section');
+   previa.append(voltar,documento);
+   previa.addEventListener('close',()=>previa.remove(),{once:true});
+   host.append(previa);
+   previa.showModal();
+   material(codigos[i],documento,true);
+ }));
  card.append(botao(escolhida?'Escolhida':'Escolher esta materialidade',async()=>{if(operando)return;operando=true;indicador.textContent='Salvando';try{sala=await oficina('salvar',{bloco:-1,versao:registro(0,-1)?.versao||0,dados:[codigos[i]],...(automatico()?{final:true}:{})});indicador.textContent='Salvo';draw();}catch(e){indicador.textContent=erro(e);}finally{operando=false;}}));box.append(card);}return;
  }
  if(!g){host.append(el('p','Aguardando a organização dos grupos pela pesquisadora.'));return;}
