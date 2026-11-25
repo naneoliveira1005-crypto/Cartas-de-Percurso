@@ -204,6 +204,16 @@ function render(){
  if(encontroAtual==='mapa'){app.append(montarMapaPorEscrito(()=>{encontroAtual='e23';render();}));return;}
  if(encontroAtual==='e23'){
   const host=el('section',undefined,'e23');app.append(host);
+  let voltarAoFluxo;
+  for(const voltar of app.parentElement.querySelectorAll('.percurso-voltar')){
+   voltar.title='Voltar ao início do fluxo da oficina';
+   voltar.setAttribute('aria-label',voltar.title);
+   voltar.onclick=()=>{
+    if(!voltarAoFluxo)return;
+    voltarAoFluxo();
+    host.scrollIntoView({block:'start'});
+   };
+  }
   const credencial=chave;
   const chamar=async(nome,args)=>{
    const resp=await fetch(API+nome,{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:credencial,...args})});
@@ -223,9 +233,9 @@ function render(){
    const {url}=await resp.json();
    return url;
   };
-  import('./e23-acesso-reservado.js?v=fluxo-pesquisadora-final').then(({montarFluxoPesquisadora})=>{
+  import('./e23-acesso-reservado.js?v=voltar-ao-fluxo').then(({montarFluxoPesquisadora})=>{
    if(!host.isConnected)return;
-   host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf}));
+   host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf,registrarVoltar:fn=>{voltarAoFluxo=fn;}}));
    import('./e23-pesquisadora.js?v=fluxo-direto').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
   }).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});
   return;
