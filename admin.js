@@ -223,7 +223,7 @@ function render(){
    const {url}=await resp.json();
    return url;
   };
-  import('./e23-acesso-reservado.js?v=fluxo-clicavel').then(({montarFluxoPesquisadora})=>{
+  import('./e23-acesso-reservado.js?v=fluxo-pesquisadora-final').then(({montarFluxoPesquisadora})=>{
    if(!host.isConnected)return;
    host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf}));
    import('./e23-pesquisadora.js?v=painel-visual').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
