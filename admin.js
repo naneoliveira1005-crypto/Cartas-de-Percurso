@@ -209,7 +209,25 @@ function render(){
    const resp=await fetch(API+nome,{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:credencial,...args})});
    const valor=await resp.json();if(!resp.ok)throw Error(valor.message||'Falha de conexão');return valor;
   };
-  import('./e23-pesquisadora.js?v=painel-visual').then(m=>m.abrir({host,chamar,el,btn})).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});
+  host.textContent='Carregando fluxo da oficina…';
+  const acompanhamento=el('section',undefined,'e23');
+  const carregarPdf=async codigo=>{
+   const lista=await chamar('e23_api',{p_action:'sessions',p_payload:{}});
+   const sessao=lista.sessions.find(s=>!s.is_test&&s.published);
+   if(!sessao)throw Error('Sessão oficial indisponível.');
+   const meta=await chamar('e23_api',{p_action:'load',p_payload:{session_id:sessao.id}});
+   const arquivo=meta.files.find(f=>f.material_code===codigo&&f.kind==='material');
+   if(!arquivo)throw Error('Materialidade indisponível.');
+   const resp=await fetch('https://zpsjuxusydfbptjotyxo.supabase.co/functions/v1/por-escrito-e23-files',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:credencial,session_id:sessao.id,file_id:arquivo.id})});
+   if(!resp.ok)throw Error('Materialidade indisponível.');
+   const {url}=await resp.json();
+   return url;
+  };
+  import('./e23-acesso-reservado.js?v=fluxo-clicavel').then(({montarFluxoPesquisadora})=>{
+   if(!host.isConnected)return;
+   host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf}));
+   import('./e23-pesquisadora.js?v=painel-visual').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
+  }).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});
   return;
  }
  if(veioDeNovidade&&encontroAtual!=='inicio'){const voltar=btn('← Voltar ao início',()=>{veioDeNovidade=false;encontroAtual='inicio';abaAtual='atividade';render();});voltar.classList.add('secondary');const linha=el('div',undefined,'toolbar voltar-notificacao');linha.append(voltar);app.append(linha);}
