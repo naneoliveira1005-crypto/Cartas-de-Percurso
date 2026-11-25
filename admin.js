@@ -9,7 +9,12 @@ async function rpc(acao='carregar',dados={}){const r=await fetch(API+'percurso_a
   }catch(e){/* O ambiente principal continua acessível mesmo sem a conta de teste. */}
  }
  return d;}
-function login(){app.replaceChildren();const f=el('form',undefined,'card login'),input=el('input'),label=el('label','Chave da pesquisadora'),st=el('p','','status');input.type='password';input.id='adminKey';label.htmlFor=input.id;const b=el('button','Entrar');b.type='submit';add(f,el('h2','Acesso da pesquisadora'),label,input,b,st);f.onsubmit=async e=>{e.preventDefault();b.disabled=true;chave=chaveDoAcesso(input.value);try{data=await rpc();sessionStorage.setItem('percurso_admin',chave);render();}catch(e){st.textContent='Não foi possível entrar. Confira sua chave e a conexão.';}finally{b.disabled=false;}};app.append(f);}
+function mostrarPainelAberto(){
+ app.tabIndex=-1;
+ app.focus({preventScroll:true});
+ document.getElementById('app').scrollIntoView({block:'start',behavior:'instant'});
+}
+function login(){app.replaceChildren();const f=el('form',undefined,'card login'),input=el('input'),label=el('label','Chave da pesquisadora'),st=el('p','','status');input.type='password';input.id='adminKey';label.htmlFor=input.id;const b=el('button','Entrar');b.type='submit';add(f,el('h2','Acesso da pesquisadora'),label,input,b,st);f.onsubmit=async e=>{e.preventDefault();b.disabled=true;chave=chaveDoAcesso(input.value);try{data=await rpc();sessionStorage.setItem('percurso_admin',chave);render();mostrarPainelAberto();}catch(e){st.textContent='Não foi possível entrar. Confira sua chave e a conexão.';}finally{b.disabled=false;}};app.append(f);}
 function select(options){const n=el('select');for(const [v,s] of options){const o=el('option',s);o.value=v;n.append(o);}return n;}
 function renderLegacy(){app.replaceChildren();const bar=el('div',undefined,'toolbar');add(bar,el('h2','Registros do percurso'),btn('Atualizar',async()=>{data=await rpc();render();}),btn('Sair',()=>{sessionStorage.removeItem('percurso_admin');chave='';data=null;login();}));add(app,bar,el('p',`${data.participantes.length} participantes cadastradas · capacidade prevista: 35. Sem comparação ou classificação de respostas.`,'muted'));
  const views=el('section',undefined,'card');add(views,el('h2','Ver as atividades'),el('p','Abra os encontros para conferir as orientações e as perguntas. Você continua no seu acesso de pesquisadora.','muted'));const choices=el('div',undefined,'actions');for(const m of data.modulos)choices.append(btn('Visualizar '+(m.id.startsWith('e')?m.id.toUpperCase():m.titulo),()=>previewModule(m)));views.append(choices);app.append(views);
@@ -344,13 +349,14 @@ function render(){
  if(!acesso){
   if(!chave){login();return;}
   app.textContent='Abrindo painel…';
-  try{data=await rpc();sessionStorage.setItem('percurso_admin',chave);render();}
+  try{data=await rpc();sessionStorage.setItem('percurso_admin',chave);render();mostrarPainelAberto();}
   catch{login();}
   return;
  }
  acesso.addEventListener('click',async ev=>{
   ev.preventDefault();
   if(acesso.dataset.abrindo==='sim')return;
+  if(data&&document.body.classList.contains('dashboard')){mostrarPainelAberto();return;}
   if(!chave){login();app.scrollIntoView({block:'start'});return;}
   acesso.dataset.abrindo='sim';
   acesso.setAttribute('aria-busy','true');
@@ -360,7 +366,7 @@ function render(){
    data=await rpc();
    sessionStorage.setItem('percurso_admin',chave);
    render();
-   window.scrollTo({top:0,behavior:'auto'});
+   mostrarPainelAberto();
   }catch{
    sessionStorage.removeItem('percurso_admin');
    chave='';
