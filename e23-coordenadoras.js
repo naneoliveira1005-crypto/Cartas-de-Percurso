@@ -17,7 +17,7 @@ export function conteudo(){
  });
  return carregandoConteudo;
 }
-export async function abrir({host,rpc,chave,el,onDirty}){
+export async function abrir({host,rpc,chave,el,onDirty,voltarAoFluxo}){
  const device=crypto.randomUUID();
  const api=(acao,p={})=>rpc('e23_api',{p_token:chave,p_action:acao,p_payload:{session_id:sid,device,...p}});
  const oficina=(acao='ler',p={})=>rpc('oficina_integrada',{p_token:chave,p_sid:sid,p_acao:acao,p:{...p,device}});
@@ -102,8 +102,9 @@ export async function abrir({host,rpc,chave,el,onDirty}){
      const leitura=mostrarPercursoCompleto(el,etapas);leitura.hidden=!consultaCompleta;
      sec.append(botao('Consultar nosso percurso completo',()=>{consultaCompleta=!consultaCompleta;leitura.hidden=!consultaCompleta;}),botao('Gerar registro completo em PDF',()=>baixarRegistroPDF({grupo:g,codigo:sala.sala.materiais[g],tituloEncontro:meta.session?.title,etapas})),powerpoint(),leitura,mostrarEsquema(el,esquema));
      sec.append(el('h3','Agora, vamos à plenária!'),el('p',orientacaoPlenaria),botao('Seguir para a plenária',()=>{fechamento='plenaria';draw();inicioDaEtapa();}));
-     sec.append(botao('Voltar aos registros coletivos',()=>{fechamento='registros';etapaVisivel=5;draw();inicioDaEtapa();}));
+     if(!voltarAoFluxo)sec.append(botao('Voltar aos registros coletivos',()=>{fechamento='registros';etapaVisivel=5;draw();inicioDaEtapa();}));
    }
+   if(voltarAoFluxo)sec.append(botao('Voltar ao início da oficina',voltarAoFluxo));
    host.replaceChildren(titulo,indicador,sec);
  }
 
