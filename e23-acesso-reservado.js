@@ -123,7 +123,7 @@ export async function entrar({host,el,btn,pesquisadora}){
  const form=()=>host.replaceChildren(label,btn('Entrar na oficina',()=>abrir(campo.value.trim())),status);form();if(chave)await abrir(chave);
 }
 
-export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf}){
+export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf,registrarVoltar}){
      const area=el('section');
      let materialEscolhido;
      const rascunhosProposta=[[],[],[]];
@@ -295,5 +295,6 @@ export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf}){
        if(typeof E23_CONTEUDO!=='undefined')preencher();
        else{const script=document.createElement('script');script.src='e23-conteudo.js';script.onload=preencher;script.onerror=()=>escrita.append(el('p','Não foi possível carregar as perguntas.'));document.head.append(script);}
      }
+     registrarVoltar?.(inicioOficina);
      inicioOficina();return area;
 }
