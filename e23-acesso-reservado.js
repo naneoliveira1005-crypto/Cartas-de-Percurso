@@ -151,7 +151,19 @@ export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf}){
          lista.append(cartao);
        }
        trilha.append(seta,lista);
-       const topo=parte(0,302,imagem);
+       const topo=el('header');
+       topo.append(el('h2','Oficina E2–E3'));
+       const passos=el('div',undefined,'m1-cartoes');
+       for(const [titulo,descricao] of [
+         ['1. Conheça as opções','Veja as três materialidades e escolha qual vai analisar.'],
+         ['2. Abra o documento','Use Ver materialidade para consultar o PDF.'],
+         ['3. Meu olhar sobre a materialidade','Consulte o PDF e responda às perguntas. O tempo de 10 minutos começa ao abrir a escrita individual na oficina.']
+       ]){
+         const passo=el('article');
+         passo.append(el('h3',titulo),el('p',descricao));
+         passos.append(passo);
+       }
+       topo.append(passos);
        const aviso=el('p');aviso.setAttribute('role','status');aviso.style.margin='.65rem 0';
        const avancar=btn('Meu olhar sobre a materialidade · Escrita individual',()=>{
          mostrarMaterialidade(materialEscolhido,true);
@@ -171,10 +183,6 @@ export function montarFluxoPesquisadora({el,btn,oficina,l,rpc,carregarPdf}){
        }
        indicarEscolha();
        trilha.append(proximo);
-       const nome=el('div');
-       nome.append(el('strong','3. Meu olhar sobre a materialidade'),el('div','PDF à esquerda, resposta à direita. Referência: 10 min.'));
-       nome.style.cssText='position:absolute;box-sizing:border-box;left:67.6667%;top:48.0132%;width:29.1667%;height:48.0132%;overflow:auto;background:#fff;border:1px solid #c4a760;border-radius:5% / 12%;color:#173d34;font-size:clamp(8px,1.32vw,19px);line-height:1.2;padding:1.1% 1.4%';
-       topo.append(nome);
        const fluxoColetivo=parte(302,870,restante);
        const analise=btn('Assim pensamos inicialmente',mostrarPropostaM1);
        analise.style.cssText='position:absolute;left:3.17%;top:31.34%;width:17.42%;height:25.70%;display:flex;align-items:flex-start;justify-content:flex-start;text-align:left;padding:1.1%;margin:0;background:#e2ebdb;color:#173d34;border:1px solid #829b73;border-radius:8px;font-size:clamp(8px,1.25vw,17px);line-height:1.15;text-decoration:underline';
