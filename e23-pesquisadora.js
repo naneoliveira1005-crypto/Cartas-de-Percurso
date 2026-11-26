@@ -27,7 +27,7 @@ export function exportacao(d,m){
   historico_coletivo:d.historico_coletivo.map(h=>({...h,movimento:blocos[h.bloco],materialidade:d.sala.materiais[h.origem]}))};
 }
 export async function abrir({host,chamar,el,btn}){
- let sid,meta,d,conteudoOficina,ocupado=false,projetando=false,grupoTela=1,agoraLocal,timer,secaoAberta=new Set();
+ let sid,meta,d,conteudoOficina,ocupado=false,projetando=false,grupoTela=1,agoraLocal,timer,ciclo,visaoAoVivo,secaoAberta=new Set();
  const api=(acao,p={})=>chamar('e23_api',{p_action:acao,p_payload:{...(sid?{session_id:sid}:{}),...p}});
  const oficina=(acao='ler',p={})=>chamar('oficina_integrada',{p_sid:sid,p_acao:acao,p});
  const acao=(txt,fn)=>btn(txt,async()=>{if(ocupado)return;ocupado=true;try{await fn();}finally{ocupado=false;}});
@@ -36,6 +36,7 @@ export async function abrir({host,chamar,el,btn}){
  function campo(box,label,elem){const l=el('label',label+' ');l.append(elem);box.append(l);}
  function secao(t){const box=el('details',undefined,'card');box.open=secaoAberta.has(t);box.append(el('summary',t));box.ontoggle=()=>{if(box.isConnected){if(box.open)secaoAberta.add(t);else secaoAberta.delete(t);}};host.append(box);return box;}
  async function listar(abrirUnica=false){
+ clearInterval(ciclo);
  const l=await api('sessions');if(l.actor?.role!=='pesquisadora')throw Error('Acesso reservado à pesquisadora.');
  host.replaceChildren(el('h2','E2–E3 integrados'));if(l.actor.is_test){await entrar(l.actor.session_id);return;}const oficiais=l.sessions.filter(s=>!s.is_test);
  if(abrirUnica&&oficiais.length===1){await entrar(oficiais[0].id);return;}
@@ -43,29 +44,74 @@ export async function abrir({host,chamar,el,btn}){
  if(!oficiais.some(s=>s.title===titulo))host.append(acao('Criar sessão fechada de 25/11/2026',async()=>{const sessao=await api('create_session',{title:titulo,is_test:false});await entrar(sessao.id);}));
  }
  const numeroVisivel = grupo => d?.sala?.materiais?.circulacao_duas_salas ? ({4:1,3:2,1:3,2:'anterior 2'}[grupo] ?? grupo) : grupo;
- async function entrar(id){sid=id;await atualizar();if(painelAutomatico())acompanhar();}
+ async function entrar(id){sid=id;await atualizar();acompanhar();}
  const painelAutomatico=()=>sid==='d79ace19-ee80-472e-8585-16784465cd6f';
  function acompanhar(){
    const sessao=sid;
-   const ciclo=setInterval(async()=>{
-     if(sid!==sessao){clearInterval(ciclo);return;}
+   clearInterval(ciclo);
+   ciclo=setInterval(async()=>{
+     if(sid!==sessao||!host.isConnected){clearInterval(ciclo);return;}
      if(!host.isConnected||ocupado||projetando)return;
      ocupado=true;
      try{
-       const novo=await oficina();
+       const [novo,novaMeta]=await Promise.all([oficina(),api('load')]);
        const estado=({agora,...dados})=>JSON.stringify(dados);
-       if(host.isConnected&&sid===sessao&&estado(novo)!==estado(d)){
-         d=novo;agoraLocal=Date.now();desenhar();
+       if(host.isConnected&&sid===sessao&&(estado(novo)!==estado(d)||JSON.stringify(novaMeta.members)!==JSON.stringify(meta.members))){
+         const faseMudou=novo.sala.fase!==d.sala.fase;
+         d=novo;meta=novaMeta;agoraLocal=Date.now();
+         if(painelAutomatico()||faseMudou)desenhar();else if(visaoAoVivo?.isConnected)resumirAndamento();
+       }
+       if(!painelAutomatico()&&visaoAoVivo?.isConnected){
+         const status=visaoAoVivo.querySelector('[role="status"]');
+         status.textContent=fases[d.sala.fase]+' · Consulta às '+new Date().toLocaleTimeString('pt-BR',{timeZone:'America/Bahia'});
        }
      }catch{
-       // A próxima consulta retoma o acompanhamento após falha de conexão.
+       if(visaoAoVivo?.isConnected)visaoAoVivo.querySelector('[role="status"]').textContent='Atualização interrompida. Os dados exibidos são da última consulta.';
      }finally{ocupado=false;}
    },4000);
  }
  async function atualizar(){[meta,d,conteudoOficina]=await Promise.all([api('load'),oficina(),conteudo()]);agoraLocal=Date.now();desenhar();}
+ function resumirAndamento(){
+ const abertos=new Set(Array.from(visaoAoVivo.querySelectorAll('[data-grupo] details[open]'),el=>el.parentElement.dataset.grupo));
+ const fase=d.sala.fase;
+ const estados=el('p',fases[fase]+' · Consulta às '+new Date().toLocaleTimeString('pt-BR',{timeZone:'America/Bahia'}),'muted');
+ estados.setAttribute('role','status');
+ visaoAoVivo.replaceChildren(el('h3','Andamento do encontro'),estados);
+ const ativos=d.grupos_ativos??[...new Set(meta.members.map(m=>m.group_no))];
+ const nomes=new Map(meta.people.map(p=>[p.id,p.name]));
+ const blocoAtual={2:1,3:1,4:2,5:3,6:5,7:5,8:5}[fase];
+ const registros=ativos.map(g=>{
+   const outro=d.sala.pares[g-1];
+   const registro=(b,origem=g)=>d.registros.find(r=>r.origem===origem&&r.bloco===b&&r.autora==null);
+   const bloco=fase===5&&registro(3)?.finalizado?4:blocoAtual;
+   return {g,outro,bloco,atual:registro(bloco,bloco===2?outro:g),propostaRecebida:registro(1,outro)};
+ });
+ const pendentes=registros.filter(r=>!r.atual?.finalizado);
+ for(const {g,outro,bloco,atual,propostaRecebida} of registros){
+   const box=el('section',undefined,'e23-panel');
+   const membros=meta.members.filter(m=>m.group_no===g);
+   const individuais=membros.filter(m=>d.registros.some(r=>r.bloco===0&&r.autora===m.actor_id&&r.finalizado));
+   box.append(el('h4','Grupo '+numeroVisivel(g)+' · '+(materiais[d.sala.materiais[g]]||'Materialidade a definir')));
+   if(bloco)box.append(el('p',blocos[bloco]+' · '+(atual?legenda(atual):'Sem registro salvo')));
+   if(fase===4&&(!outro||!propostaRecebida?.finalizado))box.append(el('p',outro?'Aguarda a proposta do Grupo '+numeroVisivel(outro):'Aguarda definição do grupo interlocutor'));
+   if(d.representacao&&[2,4,5,6].includes(fase)&&atual?.finalizado&&pendentes.length)box.append(el('p','Aguarda '+pendentes.map(p=>'Grupo '+numeroVisivel(p.g)).join(', ')+' finalizar'));
+   if(membros.length){
+     box.append(el('p',individuais.length+' de '+membros.length+' registros individuais finalizados entre as integrantes vinculadas'));
+     const detalhes=el('details');
+     detalhes.append(el('summary','Integrantes e registros individuais'));
+     for(const m of membros){const escrita=d.registros.find(r=>r.bloco===0&&r.autora===m.actor_id);detalhes.append(el('p',(nomes.get(m.actor_id)||'Participante')+' · '+(escrita?legenda(escrita):'Sem registro salvo')));}
+     detalhes.open=abertos.has(String(g));
+     box.append(detalhes);
+   }
+   box.dataset.grupo=g;
+   visaoAoVivo.append(box);
+ }
+ if(!ativos.length)visaoAoVivo.append(el('p','Nenhum grupo constituído até esta consulta.'));
+ }
  function desenhar(){
  clearInterval(timer);host.replaceChildren();if(projetando){plenaria();return;}
  host.append(el('h2','E2–E3 integrados'),el('p',meta.session.title),el('p',(meta.session.published?'Acesso liberado':'Acesso fechado')+' · '+fases[d.sala.fase],'notice'));
+ visaoAoVivo=el('section',undefined,'card');host.append(visaoAoVivo);resumirAndamento();
  const fluxo=el('img');
  fluxo.src='fluxo-oficina-e23.png?v=fechamento-plenaria';
  fluxo.alt='Fluxo da oficina: escolha da materialidade, escrita individual, produção em grupo, circulação e plenária.';
