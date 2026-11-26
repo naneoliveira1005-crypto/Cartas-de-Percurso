@@ -236,7 +236,7 @@ function render(){
   import('./e23-acesso-reservado.js?v=oficina-ver-voltar').then(({montarFluxoPesquisadora})=>{
    if(!host.isConnected)return;
    host.replaceChildren(montarFluxoPesquisadora({el,btn,oficina:acompanhamento,carregarPdf,registrarVoltar:fn=>{voltarAoFluxo=fn;}}));
-   import('./e23-pesquisadora.js?v=salas-25nov').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
+   import('./e23-pesquisadora.js?v=acompanhamento-pesquisa-2611').then(m=>m.abrir({host:acompanhamento,chamar,el,btn})).catch(e=>{acompanhamento.textContent=e.message;});
   }).catch(e=>{host.textContent='Erro ao abrir a oficina: '+e.message;});
   return;
  }
@@ -255,10 +255,21 @@ function render(){
    .then(async r=>{if(!r.ok)throw Error();return r.json();})
    .then(perfis=>{
     box.replaceChildren();
-    const completos=perfis.filter(p=>Object.values(p.complementos||{}).some(v=>String(v||'').trim())).length;
-    add(box,el('h3','Perfis das participantes'),el('p',completos+' de '+perfis.length+' participantes já acrescentaram informações pessoais.','notice'));
+    const completos=perfis.filter(p=>Object.values(p.complementos||{}).some(v=>String(v||'').trim()));
+    add(box,el('h3','Quem acrescentou informações'),el('p',completos.length+' de '+perfis.length+' participantes já acrescentaram informações pessoais.','notice'));
     const sel=select([['','Escolha uma participante'],...perfis.map(p=>[p.participante_id,p.codigo+' — '+p.nome])]);
-    const detalhe=el('div');box.append(sel,detalhe);
+    const detalhe=el('div');
+    if(completos.length){
+      const lista=el('ul');
+      for(const p of completos){
+        const item=el('li');
+        item.append(btn('Abrir ficha de '+p.nome,()=>{sel.value=p.participante_id;sel.onchange();}));
+        lista.append(item);
+      }
+      box.append(lista);
+    }
+    sel.setAttribute('aria-label','Escolha uma participante');
+    box.append(sel,detalhe);
     sel.onchange=async()=>{
       detalhe.replaceChildren();const p=perfis.find(x=>x.participante_id===sel.value);if(!p)return;
       const d=p.dados||{},x=p.complementos||{};
@@ -285,7 +296,9 @@ function render(){
 
       const grid=el('div',undefined,'perfil-dados-grid');
       const card=(t,v)=>{const a=el('article',undefined,'perfil-dado-card');add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não informado','read'));return a;};
-      grid.append(card('ETAPAS',d.etapas),card('TEMPO NA FUNÇÃO',d.tempo_funcao),card('VÍNCULO',d.vinculo),card('TEMPO NA REDE',d.tempo_rede));detalhe.append(grid);
+      const cadastro=data.participantes.find(x=>x.id===p.participante_id);
+      detalhe.append(el('h3','Ficha de caracterização'));
+      grid.append(card('NOME',p.nome),card('E-MAIL',p.email||cadastro?.email),card('FUNÇÃO',d.funcao),card('LOCAL DE ATUAÇÃO',d.onde),card('ETAPAS',d.etapas),card('TEMPO NA FUNÇÃO',d.tempo_funcao),card('VÍNCULO',d.vinculo),card('TEMPO NA REDE',d.tempo_rede));detalhe.append(grid);
 
       const textos=[['COMO CHEGUEI ATÉ AQUI',x.chegada],['O QUE ME FORMOU',x.experiencias],['UMA REALIZAÇÃO QUE LEVO COMIGO',x.realizacao],['UM POUCO DE MIM',x.sobre_mim]];
       const escrita=el('div',undefined,'perfil-escrita-grid pesquisadora-perfil-escrita');
@@ -294,7 +307,7 @@ function render(){
         add(a,el('span',t,'eyebrow'),el('p',v||'Ainda não preenchido.','read'));
         escrita.append(a);
       }
-      detalhe.append(escrita);
+      detalhe.append(el('h3','O que ela acrescentou sobre si'),escrita);
     };
     if(perfilPendente){sel.value=perfilPendente;perfilPendente=null;sel.onchange();}
    }).catch(()=>box.replaceChildren(el('p','Não foi possível carregar os perfis agora.','error')));
