@@ -197,10 +197,11 @@ function modulosDoPainel(){
  const modulos=data.modulos.filter(m=>['perfil','livre','carta'].includes(m.id)||/^e\d$/.test(m.id)&&!['e2','e3'].includes(m.id));
  const i=modulos.findIndex(m=>m.id==='e1');
  modulos.splice(i+1,0,{id:'e23',titulo:'E2–E3 integrados'});
- return modulos;
+ return [...modulos,{id:'relatoria',titulo:'Relatoria'}];
 }
 function render(){
  app=montarPainel({modulos:modulosDoPainel(),selecionado:encontroAtual,nome:'Nanny Oliveira',pesquisadora:true,navegar:id=>{veioDeNovidade=false;encontroAtual=id;abaAtual=id==='e1'?'sobre':id==='perfil'?'perfis':'atividade';render();},sair:sairPainel});
+ if(encontroAtual==='relatoria'){abrirRelatoria(app);return;}
  if(encontroAtual==='mapa'){app.append(montarMapaPorEscrito(()=>{encontroAtual='e23';render();}));return;}
  if(encontroAtual==='e23'){
   const host=el('section',undefined,'e23');app.append(host);
@@ -424,3 +425,48 @@ function render(){
  });
 })();
 
+
+async function abrirRelatoria(host){
+ add(host,el('h2','Relatoria'),el('p','Consulta restrita da pesquisadora','muted'));
+ const status=el('p','Carregando registros…','muted');
+ status.setAttribute('role','status');
+ host.append(status);
+ try{
+   const resposta=await fetch(API+'percurso_relatoria_admin',{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({p_chave:chave})});
+   if(!resposta.ok)throw Error();
+   const fontes=await resposta.json();
+   if(!host.isConnected)return;
+   const materiais=(data.materiais||[]).filter(m=>/^https:\/\//i.test(m.url)).map(m=>({titulo:m.titulo,tipo:'Materiais',etapa:m.modulo.toUpperCase(),url:m.url}));
+   const registros=[...fontes,...materiais];
+   const busca=el('input');busca.type='search';busca.placeholder='Buscar na Relatoria';
+   const opcoes=campo=>[['','Todos'],...[...new Set(registros.map(f=>f[campo]))].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(v=>[v,v])];
+   const tipo=select(opcoes('tipo')), etapa=select(opcoes('etapa'));
+   const filtros=el('section',undefined,'card');
+   for(const [nome,campo] of [['Buscar',busca],['Tipo de registro',tipo],['Etapa do percurso',etapa]]){
+     const label=el('label',nome+' ');label.append(campo);filtros.append(label);
+   }
+   const lista=el('div');host.insertBefore(filtros,status);host.append(lista);
+   const normalizar=v=>v.toLowerCase().normalize('NFD').replace(/\p{M}/gu,'');
+   function mostrar(){
+     const termos=normalizar(busca.value).trim().split(/\s+/);
+     const resultados=registros.filter(f=>(!tipo.value||f.tipo===tipo.value)&&(!etapa.value||f.etapa===etapa.value)&&termos.every(t=>normalizar([f.titulo,f.tipo,f.etapa,f.descricao].join(' ')).includes(t)));
+     status.textContent=resultados.length+' registro(s) encontrado(s)';
+     lista.replaceChildren();
+     for(const f of resultados){
+       const item=el('article',undefined,'card');
+       add(item,el('h3',f.titulo),el('p',f.tipo+' · '+f.etapa,'muted'));
+       if(f.descricao)item.append(el('p',f.descricao));
+       if(f.referencia||f.url){
+         const link=el('a',f.referencia?'Abrir na Biblioteca':'Abrir material');
+         link.href=f.referencia?'https://chatgpt.com/library?file_id='+encodeURIComponent(f.referencia)+'&account_id=personal':f.url;
+         link.target='_blank';link.rel='noopener noreferrer';item.append(link);
+       }
+       lista.append(item);
+     }
+   }
+   busca.oninput=tipo.onchange=etapa.onchange=mostrar;
+   mostrar();
+ }catch{
+   status.textContent='Não foi possível carregar a Relatoria. Atualize a página para tentar novamente.';
+ }
+}
